@@ -28,4 +28,4 @@
 (−) Exige disciplina: sem ArchUnit, um `import` indevido desfaz a modularidade. **Mitigação:** testes de arquitetura rodando no build.
 **Quando reavaliar:** se um módulo precisar escalar sozinho ou ter ciclo de deploy próprio (candidatos: Prontuário, Agenda).
 
-**Rastreia:** RNF04, RNF05, E1 ([`visao.md`](../visao.md), seção 5).
+**Rastreia:** RNF04, RNF05, E1 ([`visao.md`](../visao.md), seção 6).

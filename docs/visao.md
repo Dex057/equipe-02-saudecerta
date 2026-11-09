@@ -50,7 +50,7 @@ Nem todo stakeholder usa o sistema diretamente. Por isso separamos stakeholders 
 | Profissionais de saúde | Usam o sistema para consultar histórico, registrar atendimento e prescrever; dependem da confiabilidade dos dados. |
 | Pacientes | Titulares dos dados armazenados; têm interesse direto na privacidade do prontuário e em poder ver seus próprios agendamentos. |
 | Equipe de desenvolvimento (nós) | Responsável por entregar e manter a arquitetura ao longo do semestre. |
-| Órgãos reguladores (LGPD) | Não usam o sistema, mas impõem exigências sobre tratamento de dado sensível de saúde, o que reforça o driver de segurança/auditoria. |
+| Órgãos reguladores (LGPD) | Não usam o sistema, mas a LGPD (Lei 13.709/2018, art. 5º, II) classifica dado de saúde como dado pessoal sensível, o que reforça o driver de segurança/auditoria. |
 
 ## 4. Atores do sistema
 
@@ -61,7 +61,17 @@ Nem todo stakeholder usa o sistema diretamente. Por isso separamos stakeholders 
 | Paciente | Consulta seus próprios agendamentos e dados. |
 | Administrador | Gerencia usuários, perfis de acesso e especialidades; acompanha relatórios e trilha de auditoria. |
 
-## 5. Estilo arquitetural inicial
+**Persona de referência — Márcia, recepcionista.** Atende telefone e balcão ao mesmo tempo no horário de pico. Precisa marcar uma consulta em menos de um minuto e saber na hora se o horário já está ocupado. É ela quem define o que "rápido" significa em RNF03 e RNF06.
+
+## 5. Escopo
+
+**Dentro do escopo:** cadastro de pacientes, profissionais e especialidades; agenda e marcação de consultas com verificação de conflito; atendimento com prontuário eletrônico; prescrições e solicitação de exames; autenticação e autorização por perfil; trilha de auditoria de acesso ao prontuário; relatórios gerenciais básicos.
+
+**Fora do escopo, por decisão:** faturamento e convênios; integração com laboratórios externos; telemedicina; assinatura digital ICP-Brasil. Ficam como pontos de extensão e servem para exercitar a modificabilidade (RNF05).
+
+**Fora do escopo inicial, por decisão da equipe:** o paciente apenas consulta seus agendamentos e dados (RF14). Solicitar ou confirmar consulta pelo próprio paciente fica para depois, porque a marcação pela recepção é o fluxo que resolve o problema descrito na seção 2.
+
+## 6. Estilo arquitetural inicial
 
 **Decisão: arquitetura em camadas (apresentação, aplicação, domínio, persistência), organizada como monólito modular, com o domínio isolado da infraestrutura por interfaces (estilo hexagonal / ports and adapters).**
 

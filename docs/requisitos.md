@@ -19,10 +19,14 @@
 | RF11 | Autenticar usuários e aplicar perfis | O acesso a cada funcionalidade depende do perfil do usuário logado (recepção, profissional, admin, paciente). |
 | RF12 | Registrar auditoria de acesso ao prontuário | Todo acesso ou alteração no prontuário grava quem fez, quando e em qual paciente. |
 | RF13 | Gerar relatórios | O sistema gera relatórios de consultas por período, por profissional e por especialidade, com totais. |
+| RF14 | Consultar os próprios agendamentos e dados | O paciente autenticado vê as próprias consultas e os próprios dados cadastrais; o pedido de dados de outra pessoa é negado (RN06). |
+| RF15 | Gerenciar usuários e perfis | O administrador cria, edita e desativa usuários e atribui um perfil a cada um; usuário desativado não consegue autenticar. |
+
+RF14 e RF15 não constam na lista do guia do caso. Foram acrescentados porque são objetivos dos atores Paciente e Administrador que nenhum outro requisito cobria.
 
 ## 2. Requisitos não funcionais
 
-Estes são os requisitos que mais vão pesar nas decisões de arquitetura mais adiante (ver seção 4).
+Estes são os requisitos que mais vão pesar nas decisões de arquitetura mais adiante (ver seção 5).
 
 | ID | Atributo | Cenário de qualidade |
 |---|---|---|
@@ -46,13 +50,35 @@ Estes são os requisitos que mais vão pesar nas decisões de arquitetura mais a
 | RN06 | Paciente só enxerga os próprios dados; a recepção não tem acesso ao conteúdo clínico do prontuário. |
 | RN07 | Cancelamento de consulta só é permitido se ela estiver com status AGENDADA. |
 
-## 4. Drivers arquiteturais
+## 4. Casos de uso principais
+
+### UC01 — Marcar consulta (ator: Recepcionista)
+
+1. Busca o paciente ou o cadastra, se for novo (RF01).
+2. Seleciona a especialidade e o profissional.
+3. O sistema mostra os horários livres da agenda (RF03).
+4. Escolhe data e horário e confirma.
+5. O sistema valida o conflito (RF06, RN02) e cria a consulta como AGENDADA (RF04).
+
+**Fluxo alternativo — horário ocupado:** se o horário foi ocupado entre os passos 3 e 5, por exemplo por outra recepcionista marcando ao mesmo tempo, o sistema informa o conflito e volta ao passo 3.
+
+### UC02 — Atender paciente (ator: Profissional de saúde)
+
+1. Abre a agenda do dia e seleciona a consulta.
+2. O sistema registra o acesso ao prontuário (RF12, RNF02) e mostra o histórico (RF10).
+3. Registra queixa, evolução e conduta (RF07).
+4. Se necessário, emite prescrição (RF08) e solicita exames (RF09).
+5. O atendimento é salvo e anexado ao prontuário (RN05).
+
+**Fluxo alternativo — consulta futura:** se a data da consulta ainda não chegou, o sistema recusa o registro do atendimento (RN03).
+
+## 5. Drivers arquiteturais
 
 Nem todo requisito não funcional pesa igual na hora de desenhar a arquitetura. Olhando para os RNFs listados, destacamos três como drivers principais:
 
 **Segurança e privacidade dos dados clínicos (RNF01, RNF07).** É dado de saúde, então esse requisito não é negociável e influencia praticamente todas as camadas do sistema — autenticação, controle de acesso por perfil (RBAC) e como o prontuário é exposto pela API.
 
-**Auditabilidade do acesso ao prontuário (RNF02).** Diretamente ligado a RF12 e à regra RN06. É um driver porque não dá pra tratar como um "log a mais": o guia do caso já deixa explícito que hoje não existe nenhum registro de quem acessa o prontuário físico, e isso é apontado como um dos riscos centrais do cenário atual.
+**Auditabilidade do acesso ao prontuário (RNF02).** Diretamente ligado a RF12 e à regra RN06. É um driver porque não dá para tratar como um "log a mais": o guia do caso já deixa explícito que hoje não existe nenhum registro de quem acessa o prontuário físico, e isso é apontado como um dos riscos centrais do cenário atual.
 
 **Desempenho na busca e no acesso a dados (RNF03).** Essencial para a recepção conseguir marcar consulta rápido (RNF06) e para o profissional abrir o prontuário sem esperar.
 
