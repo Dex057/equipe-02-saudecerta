@@ -48,4 +48,4 @@ A pontuação de segurança de A reconhece a janela maior de exposição, não a
 (−) O evento de negativa é síncrono para preservar o rastro sem acoplar o módulo de negócio à Auditoria. Se o armazenamento falhar, o acesso permanece negado e a falha é registrada como `AUDITORIA_FALHA` com alerta; o registro persistido não é presumido (ADR-002).
 **Quando reavaliar:** no Projeto Final, ao implementar refresh, ou antes se a clínica exigir revogação imediata ou segregação por especialidade.
 
-**Rastreia:** RF11, RN06, RNF01, RNF06, RNF07.
+**Rastreia:** RF11, RF14, RF15, RN06, RNF01, RNF06, RNF07.
