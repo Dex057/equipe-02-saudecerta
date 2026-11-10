@@ -31,7 +31,7 @@ Liga cada requisito à decisão que o sustenta, ao componente ou à tática que 
 | **RNF03** Desempenho | ADR-002, ADR-006 | Índice de nome, paginação, auditoria fora do caminho crítico | Medição de p95 da busca com 50 mil pacientes sintéticos (premissa P2) |
 | **RNF04** Disponibilidade | ADR-001 | Monólito com `/actuator/health`, reinício automático, backup diário | Derrubar o processo e medir o tempo de recuperação; fila de auditoria drenada no desligamento |
 | **RNF05** Modificabilidade | ADR-001, ADR-003, ADR-006 | Módulos, portas `*Api`, eventos em `shared`, tabelas por módulo | Testes ArchUnit; exercício: módulo `faturamento` vazio sem alterar `agenda` ou `prontuario` |
-| **RNF06** Usabilidade | ADR-005, ADR-004 | `GET .../agenda` (horários livres), `POST /api/consultas` atômico, `409` imediato, sem reconfirmação | No protótipo, UC01 concluído em no máximo 4 chamadas à API, sem novo login; cliques e tempo ficam adiados até a SPA |
+| **RNF06** Usabilidade | ADR-005, ADR-004 | `GET .../agenda` (horários livres), `POST /api/consultas` atômico, `409` imediato, sem reconfirmação | Coleção do Postman com o UC01: no máximo 4 chamadas à API (5 se o paciente for novo) e nenhuma com novo login; a meta da E1 (≤ 1 min e ≤ 5 cliques) fica para a SPA |
 | **RNF07** Segurança de credenciais | ADR-004 | `BCryptPasswordEncoder`; `Usuario.senhaHash` | Teste: valor gravado começa com `$2`; revisão de código sem senha em texto puro |
 
 ## Cobertura inversa (ADR → requisitos)
@@ -41,18 +41,10 @@ Confere que nenhuma decisão arquitetural declarada nas ADRs fique sem requisito
 | ADR | Requisitos que sustenta |
 |---|---|
 | ADR-001 Monólito modular | RNF04, RNF05 |
-<<<<<<< HEAD
-| ADR-002 Auditoria híbrida | RF07, RF10, RF12, RNF01, RNF02, RNF03 |
-| ADR-003 Hexagonal | RF01, RF02, RF03, RF07, RF08, RF09, RNF05 |
-| ADR-004 RBAC + titularidade + JWT | RF10, RF11, RN06, RNF01, RNF06, RNF07 |
-| ADR-005 Anti-conflito de horário | RF03, RF04, RF05, RF06, RN02, RNF06 |
-| ADR-006 Banco com propriedade por módulo | RF01, RF13, RN05, RNF03, RNF05 |
-=======
 | ADR-002 Auditoria híbrida | RF12, RF10, RF07, RNF01, RNF02, RNF03 |
 | ADR-003 Hexagonal | RF02, RF07, RF08, RF09, RN01–RN07, RNF05 |
 | ADR-004 RBAC + titularidade + JWT | RF11, RF14, RF15, RN06, RNF01, RNF06, RNF07 |
 | ADR-005 Anti-conflito de horário | RF03, RF04, RF05, RF06, RN02, RNF06 |
 | ADR-006 Banco com propriedade por módulo | RF01, RF13, RN01, RN05, RNF03, RNF05 |
->>>>>>> 74934d7 (docs: atualiza matriz de rastreabilidade)
 
 Os requisitos RF01 a RF15, as regras de negócio RN01–RN07 e os requisitos não funcionais RNF01–RNF07 possuem linhas próprias nesta matriz. As regras RN01–RN07 também têm seu local de aplicação e teste detalhados em `arquitetura.md`, seção 4.2.
