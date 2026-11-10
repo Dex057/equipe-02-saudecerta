@@ -202,10 +202,8 @@ flowchart TB
     ev -.->|"1. assíncrono"| al
     ev -.->|"2 e 3. síncrono<br/>(2 na mesma transação)"| al
     al --> asv
-    ps -->|"2. escrita: registra na mesma transação"| asv
     sec -.->|"AccessDeniedException"| dh
     dh -->|"3. publica AcessoNegado"| ev
-    ev -.->|"síncrono"| al
     asv -->|"INSERT"| db
     ac --> asv
 
