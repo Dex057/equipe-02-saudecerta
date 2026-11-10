@@ -19,7 +19,7 @@
 
 ## 1. Introdução e premissas
 
-Este documento transforma os requisitos da E1 ([`visao.md`](visao.md) e [`requisitos.md`](requisitos.md)) em arquitetura. Ele contém: diagramas C4 (seção 2), camadas e componentes (seção 3), modelo de domínio (seção 4) e cenários de qualidade (seção 5). As decisões estão em [`adr/`](adr/README.md) e a matriz de rastreabilidade em [`rastreabilidade.md`](rastreabilidade.md).
+Este documento transforma os requisitos da E1 ([`visao.md`](visao.md) e [`requisitos.md`](requisitos.md)) em arquitetura. Ele contém: diagramas C4 (seção 2, fonte editável em `arquitetura.drawio`), camadas e componentes (seção 3), modelo de domínio (seção 4) e cenários de qualidade (seção 5). As decisões estão em [`adr/`](adr/README.md) e a matriz de rastreabilidade em [`rastreabilidade.md`](rastreabilidade.md).
 
 A E1 deixou como ponto central a tensão entre **segurança/auditoria** (RNF01, RNF02, RNF07) e **desempenho/usabilidade** (RNF03, RNF06). Todas as decisões abaixo foram tomadas olhando para essa tensão, e cada ADR diz qual lado ela favorece e o que custa.
 
@@ -39,58 +39,15 @@ A E1 deixou como ponto central a tensão entre **segurança/auditoria** (RNF01, 
 
 Mostra o SaúdeCerta como uma caixa preta, quem o usa e o que está ao redor. Os sistemas externos tracejados **não existem hoje**: são as extensões futuras listadas como fora do escopo no guia (faturamento/convênios, laboratórios, assinatura ICP-Brasil). Ficam no diagrama para mostrar onde o sistema vai crescer (RNF05).
 
-```mermaid
-flowchart TB
-    rec["<b>Recepcionista</b><br/>[Pessoa]<br/>Cadastra pacientes; marca, remarca<br/>e cancela consultas"]
-    prof["<b>Profissional de saúde</b><br/>[Pessoa]<br/>Consulta histórico, registra atendimento,<br/>prescreve e solicita exames"]
-    pac["<b>Paciente</b><br/>[Pessoa]<br/>Consulta os próprios agendamentos<br/>e dados"]
-    adm["<b>Administrador</b><br/>[Pessoa]<br/>Gerencia usuários, perfis e especialidades;<br/>acompanha relatórios e auditoria"]
-
-    sc["<b>SaúdeCerta</b><br/>[Sistema de software]<br/>Agenda, atendimento, prontuário eletrônico,<br/>prescrição/exames, controle de acesso e auditoria"]
-
-    fat["<b>Faturamento e convênios</b><br/>[Sistema externo — futuro]"]
-    lab["<b>Laboratórios externos</b><br/>[Sistema externo — futuro]"]
-    icp["<b>Assinatura digital ICP-Brasil</b><br/>[Sistema externo — futuro]"]
-
-    rec -->|"Gerencia consultas e cadastros [HTTPS]"| sc
-    prof -->|"Atende e registra no prontuário [HTTPS]"| sc
-    pac -->|"Consulta seus dados [HTTPS]"| sc
-    adm -->|"Administra e audita [HTTPS]"| sc
-    sc -.->|"integração prevista, fora do escopo"| fat
-    sc -.->|"integração prevista, fora do escopo"| lab
-    sc -.->|"integração prevista, fora do escopo"| icp
-
-    classDef person fill:#08427b,stroke:#052e56,color:#fff
-    classDef system fill:#1168bd,stroke:#0b4884,color:#fff
-    classDef ext fill:#999,stroke:#6b6b6b,color:#fff,stroke-dasharray:5 3
-    class rec,prof,pac,adm person
-    class sc system
-    class fat,lab,icp ext
-```
+![C4 nível 1 — Contexto do SaúdeCerta](img/c4-1-contexto.png)
+*Fonte editável: [arquitetura.drawio](arquitetura.drawio), página 1.*
 
 ### 2.2 Nível 2 — Contêineres
 
 Abre o SaúdeCerta em unidades executáveis/implantáveis. São três: a aplicação web, a API (monólito modular, ADR-001) e o banco de dados. A auditoria **não** é um contêiner separado: roda dentro da API, alimentada por eventos: assíncrona na leitura e síncrona na escrita e no acesso negado (ADR-002).
 
-```mermaid
-flowchart TB
-    users["<b>Usuários</b><br/>[Pessoas]<br/>Recepcionista, Profissional,<br/>Paciente, Administrador"]
-
-    subgraph sc["SaúdeCerta [Sistema de software]"]
-        spa["<b>Aplicação Web</b><br/>[Contêiner: SPA no navegador]<br/>Telas de agenda, cadastro,<br/>prontuário e administração"]
-        api["<b>API SaúdeCerta</b><br/>[Contêiner: Java 17 + Spring Boot 3]<br/>Monólito modular: regras de negócio,<br/>autenticação, RBAC e auditoria"]
-        db[("<b>Banco de dados</b><br/>[Contêiner: PostgreSQL; H2 em dev/teste]<br/>Cadastros, agenda, prontuário,<br/>usuários e trilha de auditoria")]
-    end
-
-    users -->|"Usam [HTTPS]"| spa
-    spa -->|"Chama [JSON/REST sobre HTTPS, token JWT]"| api
-    api -->|"Lê e grava [JDBC / Spring Data JPA]"| db
-
-    classDef person fill:#08427b,stroke:#052e56,color:#fff
-    classDef container fill:#438dd5,stroke:#2e6295,color:#fff
-    class users person
-    class spa,api,db container
-```
+![C4 nível 2 — Contêineres do SaúdeCerta](img/c4-2-conteineres.png)
+*Fonte editável: [arquitetura.drawio](arquitetura.drawio), página 2.*
 
 ### 2.3 Nível 3 — Componentes da API
 
@@ -100,52 +57,8 @@ O contêiner **API SaúdeCerta** é dividido em módulos de negócio (pacotes de
 
 As setas cheias são dependências de código permitidas (um módulo só usa a interface pública `*Api` do outro); as tracejadas são eventos. Segurança é transversal (autenticação e autorização por perfil valem para todos os módulos), então as setas de autorização não foram desenhadas para não poluir o diagrama. Os eventos (`ProntuarioAcessado`, `AtendimentoRegistrado`, `AcessoNegado`) ficam em `shared.eventos`, de modo que **nenhum módulo de negócio depende de Auditoria**: Prontuário e Segurança só publicam eventos, e o `AuditoriaListener` os consome.
 
-```mermaid
-flowchart LR
-    spa["<b>Aplicação Web</b><br/>[Contêiner]"]
-
-    subgraph api["API SaúdeCerta [Contêiner: Spring Boot]"]
-        cad["<b>Cadastro</b><br/>[Módulo cadastro]<br/>Pacientes, profissionais<br/>e especialidades"]
-        age["<b>Agenda</b><br/>[Módulo agenda]<br/>Disponibilidade, marcação,<br/>remarcação, cancelamento,<br/>conflito de horário"]
-        pro["<b>Prontuário</b><br/>[Módulo prontuario]<br/>Atendimento, histórico,<br/>prescrição e exames"]
-        rel["<b>Relatórios</b><br/>[Módulo relatorios]<br/>Consultas por período,<br/>profissional e especialidade"]
-        seg["<b>Segurança</b><br/>[Módulo seguranca]<br/>Login, JWT, perfis RBAC<br/>e política de titularidade"]
-        aud["<b>Auditoria</b><br/>[seguranca.auditoria]<br/>Grava e consulta a<br/>trilha de acesso"]
-        shr["<b>Shared</b><br/>[Módulo shared]<br/>Eventos, exceções,<br/>configuração"]
-    end
-
-    db[("<b>Banco de dados</b><br/>[Contêiner]")]
-
-    spa -->|"REST"| cad
-    spa -->|"REST"| age
-    spa -->|"REST"| pro
-    spa -->|"REST"| rel
-    spa -->|"REST (login)"| seg
-    spa -->|"REST (ADMIN)"| aud
-
-    age -->|"CadastroApi"| cad
-    pro -->|"CadastroApi"| cad
-    pro -->|"AgendaApi"| age
-    rel -->|"CadastroApi / AgendaApi<br/>(leitura)"| cad
-    rel -->|"AgendaApi (leitura)"| age
-
-    pro -.->|"evento ProntuarioAcessado<br/>(assíncrono)"| shr
-    pro -.->|"evento AtendimentoRegistrado<br/>(síncrono)"| shr
-    seg -.->|"evento AcessoNegado<br/>(síncrono)"| shr
-    shr -.->|"entrega ao listener"| aud
-
-    cad --> db
-    age --> db
-    pro --> db
-    rel --> db
-    seg --> db
-    aud --> db
-
-    classDef container fill:#438dd5,stroke:#2e6295,color:#fff
-    classDef comp fill:#85bbf0,stroke:#5d8cc0,color:#000
-    class spa,db container
-    class cad,age,pro,rel,seg,aud,shr comp
-```
+![C4 nível 1 — Contexto do SaúdeCerta](img/c4-1-contexto.png)
+*Fonte editável: [arquitetura.drawio](arquitetura.drawio), página 1.*
 
 | Componente (módulo) | Responsabilidade | Requisitos |
 |---|---|---|
@@ -161,56 +74,8 @@ flowchart LR
 
 É o ponto mais sensível do sistema e onde a tensão entre RNF02 e RNF03 se resolve. Três caminhos de auditoria convivem (ADR-002), e os três chegam à Auditoria por evento, sem que Prontuário ou Segurança chamem o `AuditoriaService`: **leitura** (`ProntuarioAcessado`, listener assíncrono), **escrita** (`AtendimentoRegistrado`, listener síncrono que roda na mesma transação do atendimento; se a gravação falhar, a alteração clínica também falha) e **acesso negado** (`AcessoNegado`, listener síncrono; se a gravação falhar, o acesso continua negado e a falha vai para o log `AUDITORIA_FALHA`).
 
-```mermaid
-flowchart TB
-    spa["<b>Aplicação Web</b><br/>[Contêiner]"]
-
-    subgraph api["API SaúdeCerta — módulos prontuario, seguranca e shared"]
-        pc["<b>ProntuarioController</b><br/>[api: @RestController, DTOs]<br/>Histórico, atendimento,<br/>prescrição e exames"]
-        sec["<b>SegurancaConfig + TitularidadePolicy</b><br/>[seguranca: Spring Security]<br/>@PreAuthorize por perfil;<br/>paciente só o próprio prontuário"]
-        ps["<b>ProntuarioService</b><br/>[application: @Service, @Transactional]<br/>Casos de uso do prontuário"]
-        dom["<b>Atendimento (agregado)</b><br/>[domain]<br/>Atendimento, Prescricao, ItemDePrescricao,<br/>SolicitacaoDeExame, Complemento<br/>Regras RN03, RN04, RN05"]
-        pr["<b>ProntuarioRepository</b><br/>[porta no domain]"]
-        cp["<b>ConsultaPort</b><br/>[porta no domain]"]
-        pja["<b>ProntuarioJpaAdapter</b><br/>[infra: Spring Data JPA]"]
-        aa["<b>AgendaAdapter</b><br/>[infra]"]
-        ev["<b>ProntuarioAcessado / AtendimentoRegistrado / AcessoNegado</b><br/>[shared.eventos]<br/>Eventos de domínio"]
-        al["<b>AuditoriaListener</b><br/>[seguranca.auditoria: @EventListener]<br/>Leitura: @Async, fila limitada, 3 tentativas,<br/>fallback em log estruturado<br/>Escrita e negado: síncrono"]
-        asv["<b>AuditoriaService</b><br/>[seguranca.auditoria]<br/>Grava RegistroAuditoria"]
-        ac["<b>AuditoriaController</b><br/>[seguranca.auditoria: api]<br/>Consulta da trilha (ADMIN)"]
-    end
-
-    agenda["<b>Módulo Agenda</b><br/>[AgendaApi]"]
-    db[("<b>Banco de dados</b><br/>[Contêiner]")]
-
-    spa -->|"REST"| pc
-    spa -->|"REST (ADMIN)"| ac
-    pc -->|"autoriza antes de executar"| sec
-    pc --> ps
-    ps --> dom
-    ps --> pr
-    ps --> cp
-    pja -.->|"implementa"| pr
-    aa -.->|"implementa"| cp
-    pja -->|"JPA"| db
-    aa -->|"chama"| agenda
-
-    ps -->|"1. leitura: publica ProntuarioAcessado"| ev
-    ps -->|"2. escrita: publica AtendimentoRegistrado"| ev
-    sec -->|"3. acesso negado: publica AcessoNegado"| ev
-    ev -.->|"1. assíncrono"| al
-    ev -.->|"2 e 3. síncrono<br/>(2 na mesma transação)"| al
-    al --> asv
-    asv -->|"INSERT"| db
-    ac --> asv
-
-    classDef container fill:#438dd5,stroke:#2e6295,color:#fff
-    classDef comp fill:#85bbf0,stroke:#5d8cc0,color:#000
-    classDef port fill:#d6e9fa,stroke:#5d8cc0,color:#000,stroke-dasharray:4 2
-    class spa,db,agenda container
-    class pc,sec,ps,dom,pja,aa,ev,al,asv,ac comp
-    class pr,cp port
-```
+![C4 nível 2 — Contêineres do SaúdeCerta](img/c4-2-conteineres.png)
+*Fonte editável: [arquitetura.drawio](arquitetura.drawio), página 2.*
 
 #### 2.3.3 Zoom: módulo Agenda e o anti-conflito de horário
 
