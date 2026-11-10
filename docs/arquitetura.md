@@ -70,7 +70,7 @@ flowchart TB
 
 ### 2.2 Nível 2 — Contêineres
 
-Abre o SaúdeCerta em unidades executáveis/implantáveis. São três: a aplicação web, a API (monólito modular, ADR-001) e o banco de dados. A auditoria **não** é um contêiner separado: roda dentro da API, de forma assíncrona (ADR-002).
+Abre o SaúdeCerta em unidades executáveis/implantáveis. São três: a aplicação web, a API (monólito modular, ADR-001) e o banco de dados. A auditoria **não** é um contêiner separado: roda dentro da API, alimentada por eventos: assíncrona na leitura e síncrona na escrita e no acesso negado (ADR-002).
 
 ```mermaid
 flowchart TB
@@ -98,7 +98,7 @@ O contêiner **API SaúdeCerta** é dividido em módulos de negócio (pacotes de
 
 #### 2.3.1 Visão geral dos módulos
 
-As setas cheias são dependências de código permitidas (um módulo só usa a interface pública `*Api` do outro); as tracejadas são eventos. Segurança é transversal (autenticação e autorização por perfil valem para todos os módulos), então as setas de autorização não foram desenhadas para não poluir o diagrama. Os eventos (`ProntuarioAcessado`, `AcessoNegado`) ficam em `shared.eventos`, de modo que **nenhum módulo de negócio depende de Auditoria**.
+As setas cheias são dependências de código permitidas (um módulo só usa a interface pública `*Api` do outro); as tracejadas são eventos. Segurança é transversal (autenticação e autorização por perfil valem para todos os módulos), então as setas de autorização não foram desenhadas para não poluir o diagrama. Os eventos (`ProntuarioAcessado`, `AtendimentoRegistrado`, `AcessoNegado`) ficam em `shared.eventos`, de modo que **nenhum módulo de negócio depende de Auditoria**: Prontuário e Segurança só publicam eventos, e o `AuditoriaListener` os consome.
 
 ```mermaid
 flowchart LR
@@ -130,7 +130,8 @@ flowchart LR
     rel -->|"AgendaApi (leitura)"| age
 
     pro -.->|"evento ProntuarioAcessado<br/>(assíncrono)"| shr
-    seg -.->|"evento AcessoNegado"| shr
+    pro -.->|"evento AtendimentoRegistrado<br/>(síncrono)"| shr
+    seg -.->|"evento AcessoNegado<br/>(síncrono)"| shr
     shr -.->|"entrega ao listener"| aud
 
     cad --> db
@@ -158,7 +159,7 @@ flowchart LR
 
 #### 2.3.2 Zoom: módulo Prontuário e fluxo de auditoria
 
-É o ponto mais sensível do sistema e onde a tensão entre RNF02 e RNF03 se resolve. Três caminhos de auditoria convivem (ADR-002): **leitura** (assíncrona, via evento), **escrita** (síncrona, na mesma transação do atendimento) e **acesso negado** (síncrona).
+É o ponto mais sensível do sistema e onde a tensão entre RNF02 e RNF03 se resolve. Três caminhos de auditoria convivem (ADR-002), e os três chegam à Auditoria por evento, sem que Prontuário ou Segurança chamem o `AuditoriaService`: **leitura** (`ProntuarioAcessado`, listener assíncrono), **escrita** (`AtendimentoRegistrado`, listener síncrono que roda na mesma transação do atendimento; se a gravação falhar, a alteração clínica também falha) e **acesso negado** (`AcessoNegado`, listener síncrono; se a gravação falhar, o acesso continua negado e a falha vai para o log `AUDITORIA_FALHA`).
 
 ```mermaid
 flowchart TB
@@ -174,8 +175,8 @@ flowchart TB
         cp["<b>ConsultaPort</b><br/>[porta no domain]"]
         pja["<b>ProntuarioJpaAdapter</b><br/>[infra: Spring Data JPA]"]
         aa["<b>AgendaAdapter</b><br/>[infra]"]
-        ev["<b>ProntuarioAcessado / AcessoNegado</b><br/>[shared.eventos]<br/>Eventos de domínio"]
-        al["<b>AuditoriaListener</b><br/>[seguranca.auditoria: @Async @EventListener]<br/>Fila limitada, 3 tentativas,<br/>fallback em log estruturado"]
+        ev["<b>ProntuarioAcessado / AtendimentoRegistrado / AcessoNegado</b><br/>[shared.eventos]<br/>Eventos de domínio"]
+        al["<b>AuditoriaListener</b><br/>[seguranca.auditoria: @EventListener]<br/>Leitura: @Async, fila limitada, 3 tentativas,<br/>fallback em log estruturado<br/>Escrita e negado: síncrono"]
         asv["<b>AuditoriaService</b><br/>[seguranca.auditoria]<br/>Grava RegistroAuditoria"]
         ac["<b>AuditoriaController</b><br/>[seguranca.auditoria: api]<br/>Consulta da trilha (ADMIN)"]
     end
@@ -195,8 +196,11 @@ flowchart TB
     pja -->|"JPA"| db
     aa -->|"chama"| agenda
 
-    ps -->|"1. leitura: publica evento"| ev
-    ev -.->|"assíncrono"| al
+    ps -->|"1. leitura: publica ProntuarioAcessado"| ev
+    ps -->|"2. escrita: publica AtendimentoRegistrado"| ev
+    sec -->|"3. acesso negado: publica AcessoNegado"| ev
+    ev -.->|"1. assíncrono"| al
+    ev -.->|"2 e 3. síncrono<br/>(2 na mesma transação)"| al
     al --> asv
     ps -->|"2. escrita: registra na mesma transação"| asv
     sec -.->|"AccessDeniedException"| dh
@@ -262,6 +266,31 @@ flowchart TB
     class cr,cdp port
 ```
 
+### 2.4 Implantação: tiers e disponibilidade
+
+**Camada × tier.** *Camada* é uma divisão lógica do código (`api / application / domain / infra`, seção 3.1) e existe dentro de um mesmo processo. *Tier* é uma divisão física: onde cada parte roda. As quatro camadas de todos os módulos ficam juntas no mesmo tier de aplicação.
+
+| Tier | Onde roda | O que roda | Observação |
+|---|---|---|---|
+| 1. Apresentação | Navegador do usuário | SPA (contêiner Aplicação Web da seção 2.2) | Não é entregue no protótipo (P1); a API é exercitada por Postman/Insomnia |
+| 2. Aplicação | Servidor da clínica, contêiner Docker `api` | Monólito modular Spring Boot (Java 17): camadas `api`, `application`, `domain` e `infra` de todos os módulos, JWT, RBAC e auditoria | Uma instância (P4) |
+| 3. Dados | Mesmo servidor, contêiner Docker `db` | PostgreSQL com volume persistente; H2 em memória em dev/teste | Só a API acessa o banco; a porta do banco não é publicada fora do servidor |
+
+Os dois contêineres sobem juntos por um `docker-compose.yml`. É uma implantação em um único servidor: simples e barata, mas esse servidor é ponto único de falha, o que a premissa P4 e o ADR-001 aceitam.
+
+**Como a meta de 99% é cumprida (RNF04).** No expediente de 12 h/dia, 26 dias por mês, são 312 h, e 1% de tolerância equivale a cerca de 3 h de indisponibilidade por mês. Cada mecanismo abaixo ataca uma causa de queda:
+
+| Causa de queda | Mecanismo | Efeito esperado |
+|---|---|---|
+| Processo da API termina (erro fatal, falta de memória) | `restart: unless-stopped` no Compose e a JVM iniciada com `-XX:+ExitOnOutOfMemoryError`, para que a falta de memória derrube o processo em vez de deixá-lo travado | A API volta sozinha em cerca de 1 minuto (meta de projeto, a medir no E3) |
+| Servidor reiniciado (queda de energia, atualização do sistema operacional) | Serviço do Docker iniciado com o sistema operacional; a política `unless-stopped` religa os dois contêineres | Volta sem intervenção, na ordem `db` e depois `api` (`depends_on` com `condition: service_healthy`) |
+| Atualização de versão | Feita fora do expediente, com `docker stop` e `stop_grace_period: 30s`, mais `server.shutdown=graceful` no Spring | A fila de auditoria pendente é drenada (ADR-002) e nenhuma requisição é cortada no meio |
+| Perda ou corrupção de dados | Backup diário às 02:00 com `pg_dump`, copiado para um segundo disco ou máquina, mantendo 7 dias; restauração testada uma vez antes da entrega do E3 | Perda máxima de 24 h de dados (meta de projeto); a restauração conta no orçamento de indisponibilidade |
+
+O `/actuator/health` também é o `healthcheck` do Compose, e é por ele que se sabe que a API voltou. **Limite declarado:** o Docker só reinicia contêiner cujo processo terminou; uma API travada, mas ainda viva, aparece como `unhealthy` e não é reiniciada sozinha. Esse caso fica coberto por monitoramento manual no protótipo, e adotar um supervisor para reiniciar contêineres `unhealthy` fica para o Projeto Final.
+
+Uma queda de 1 minuto da API consome menos de 1% do orçamento de 3 h; uma restauração completa do banco, estimada em até 1 h, consome cerca de um terço. Dois incidentes graves no mesmo mês ainda cabem na meta; um servidor físico fora do ar por mais de 3 h, não.
+
 ---
 
 ## 3. Camadas e componentes
@@ -295,7 +324,7 @@ br.edu.ifpa.saudecerta
 ├── relatorios    (api, application, infra)           consultas de leitura
 ├── seguranca     (api, application, domain, infra)   Usuario, perfis, JWT, TitularidadePolicy
 │   └── auditoria (api, application, domain, infra)   RegistroAuditoria, AuditoriaListener
-└── shared        (eventos, excecoes, config)         ProntuarioAcessado, AcessoNegado, @ControllerAdvice
+└── shared        (eventos, excecoes, config)         ProntuarioAcessado, AtendimentoRegistrado, AcessoNegado, @ControllerAdvice
 ```
 
 ### 3.3 Controle de acesso por perfil (RBAC)
@@ -587,9 +616,9 @@ Cada cenário segue o formato do guia (fonte, estímulo, artefato, ambiente, res
 | **RNF01** Segurança | Usuário autenticado sem perfil clínico (ex.: recepcionista) ou paciente tentando ver prontuário alheio | `GET /api/pacientes/{id}/prontuario` | Prontuário + Segurança | Operação normal | `AccessDeniedHandler` ou `@ControllerAdvice` captura a negativa, publica `AcessoNegado` e o listener síncrono grava o registro antes da resposta `403`; falha de persistência mantém o acesso negado e gera `AUDITORIA_FALHA` e alerta | 100% das tentativas indevidas bloqueadas; tentativas registradas em operação normal | RBAC, titularidade, evento síncrono — ADR-004, ADR-002 |
 | **RNF02** Auditabilidade | Profissional | Abre o prontuário de um paciente | Prontuário + Auditoria | Operação normal | Publica `ProntuarioAcessado`; listener grava usuário, paciente, data/hora e ação | Disponível ao admin em ≤ 1 min (E1); *meta de projeto*: ≤ 5 s | Evento assíncrono, registro imutável — ADR-002 |
 | **RNF03** Desempenho | Recepcionista | Busca paciente pelo nome | `GET /api/pacientes?nome=` + índice | Uso normal, base de referência da premissa P2 | Lista paginada (20 itens) a partir de índice de nome normalizado | p95 < 2 s. *Meta de projeto*: abrir o histórico (primeira página) também com p95 < 2 s | Índice, paginação, auditoria fora do caminho crítico — ADR-002, ADR-006 |
-| **RNF04** Disponibilidade | Falha de processo ou de infraestrutura | A API cai durante o expediente | Contêiner da API | 12 h/dia de funcionamento | Reinício automático; `/actuator/health` indica quando voltou; auditoria pendente é drenada no desligamento ordenado | ≥ 99% por mês no período (≈ 3 h de indisponibilidade tolerada, supondo 26 dias × 12 h); implantações fora do expediente | Healthcheck, restart automático, backup diário — ADR-001 |
+| **RNF04** Disponibilidade | Falha de processo ou de infraestrutura | A API cai durante o expediente | Contêiner da API | 12 h/dia de funcionamento | Reinício automático pelo Docker (`restart: unless-stopped`); `/actuator/health` indica quando voltou; auditoria pendente é drenada no desligamento ordenado; mecanismos detalhados na seção 2.4 | ≥ 99% por mês no período (≈ 3 h de indisponibilidade tolerada, supondo 26 dias × 12 h); implantações fora do expediente | Healthcheck, política de restart do Docker, backup diário com `pg_dump` — seção 2.4, ADR-001 |
 | **RNF05** Modificabilidade | Desenvolvedor | Incluir o módulo Faturamento | Núcleo agenda/prontuário | Evolução futura | Novo módulo usa `AgendaApi` e eventos; nenhum código de `agenda` ou `prontuario` é alterado | ≤ 5 dias de equipe; **0** arquivos alterados em `agenda.domain` e `prontuario.domain` | Módulos, portas, eventos — ADR-001, ADR-003, ADR-006 |
-| **RNF06** Usabilidade | Recepcionista | Marca uma consulta simples (UC01) | Agenda + SPA | Horário de pico, telefone e balcão ao mesmo tempo | Horários livres em uma chamada; marcação atômica; conflito devolve `409` imediato com mensagem | ≤ 1 min e ≤ 5 cliques a partir da tela inicial | Endpoint de horários livres, `POST` único, sem reautenticação por ação — ADR-005, ADR-004 |
+| **RNF06** Usabilidade | Recepcionista | Marca uma consulta simples (UC01) | Agenda (API); a SPA só existe no Projeto Final (P1) | Horário de pico, telefone e balcão ao mesmo tempo | Horários livres em uma chamada; marcação atômica; conflito devolve `409` imediato com mensagem | **No protótipo:** UC01 concluído em no máximo 4 chamadas à API (buscar paciente, listar profissionais, listar horários livres, `POST` da consulta), 5 se o paciente for novo, e nenhuma com novo login. **Meta da E1** (≤ 1 min e ≤ 5 cliques): adiada, só verificável com a SPA | Endpoint de horários livres, `POST` único, sem reautenticação por ação — ADR-005, ADR-004 |
 | **RNF07** Credenciais | Revisor de código ou quem tem acesso ao banco | Lê a tabela `usuario` e o código | Segurança | Qualquer | Só existe `senha_hash` (BCrypt com sal); senha nunca é gravada nem logada | 0 ocorrências de senha em texto puro no banco, código ou logs | `BCryptPasswordEncoder` — ADR-004 |
 
 ### 5.1 Pontos de tradeoff
@@ -598,12 +627,25 @@ Os pares de requisitos que se puxam em direções opostas e como a arquitetura o
 
 | Tradeoff | Quem perde o quê | Resolução |
 |---|---|---|
-| **RNF02 × RNF03** — auditar tudo × leitura rápida | Auditoria síncrona penaliza a leitura; assíncrona pode perder um registro se o processo morrer | Auditoria **híbrida**: leitura assíncrona, escrita e acesso negado síncronos; risco residual declarado e com plano de evolução (outbox). ADR-002 |
-| **RNF01 × RNF06** — controle forte × recepção ágil | Perfis e confirmações em excesso travam o balcão; token longo amplia a janela de revogação | O perfil é resolvido no login e a autorização por requisição é em memória, sem confirmação por ação. No E3 o JWT expira em 8 h (um turno): a recepção evita relogins durante o turno, mas token emitido não é revogado antes do vencimento; o risco é aceito e refresh revogável fica para o Projeto Final. ADR-004 |
+| **RNF02 × RNF03** — auditar tudo × leitura rápida | Auditoria síncrona penaliza a leitura; assíncrona pode perder um registro se o processo morrer | Auditoria **híbrida**: leitura assíncrona, escrita e acesso negado síncronos, todos por evento (o módulo de negócio não conhece a Auditoria); risco residual declarado e com plano de evolução (outbox). A gravação síncrona na escrita acrescenta um `INSERT` à transação do atendimento; escrita é rara, então o custo é pequeno. ADR-002 |
+| **RNF01 × RNF06** — controle forte × recepção ágil | Perfis e confirmações em excesso travam o balcão | O perfil é resolvido **uma vez**, no login (claims do JWT); a checagem por requisição é em memória, sem consulta ao banco nem confirmação extra. A restrição forte fica onde o risco está (prontuário), não na agenda. ADR-004 |
 | **RNF05 × esforço** — modularidade × velocidade | Domínio puro com mapeadores dá mais classes | Aceito só nos agregados com regra; custo contido por mapeamento manual simples. ADR-003 |
 | **RNF04 × custo** — disponibilidade × simplicidade | Uma instância não tem failover | A meta de 99% em horário comercial é atingível com reinício rápido; réplicas custam mais do que o requisito exige. ADR-001 |
+| **RNF02 × RNF03 na escrita** — auditar alterações × gravar rápido | Cada atendimento, prescrição, exame ou complemento ganha um `INSERT` síncrono na mesma transação, e uma falha na auditoria desfaz a alteração clínica | Aceito: escrita é rara perto da leitura, e "nenhuma alteração sem rastro" vale mais que alguns milissegundos. O custo é medido no E3 (seção 5.2): *meta de projeto* de acréscimo p95 < 200 ms no `POST` do atendimento. ADR-002 |
 
----
+### 5.2 Como cada medida será obtida
+
+Todos os cenários da tabela acima têm fonte, estímulo, artefato, ambiente, resposta e medida. A tabela abaixo diz **como** cada medida é obtida no E3, para que nenhuma fique só como intenção. "Build" é a execução automática da suíte de testes (Maven) a cada push.
+
+| ID | Como medir (ferramenta e procedimento) | Massa de dados e ambiente | Quem mede |
+|---|---|---|---|
+| **RNF01** | Teste de integração (JUnit + MockMvc) que percorre a matriz de perfis da seção 3.3: cada perfil chama cada rota; espera `403` onde não há permissão e, a cada `403`, confere que existe um `RegistroAuditoria` de acesso negado | Um usuário por perfil, dois pacientes e um prontuário; H2 | Build |
+| **RNF02** | Teste de integração que abre um prontuário e consulta `GET /api/auditoria` repetidamente (Awaitility) até o registro aparecer, medindo o tempo decorrido; falha se passar de 5 s (meta de projeto) | Um profissional, um paciente com prontuário e um administrador; H2 | Build |
+| **RNF03** | Roteiro de carga com k6: 10 usuários virtuais por 1 min em `GET /api/pacientes?nome=` e no histórico do prontuário; extrai o p95 do relatório do k6. A mesma carga, no `POST` do atendimento com e sem listener de auditoria, mede o custo na escrita da seção 5.1 | Base sintética da premissa P2 (50 mil pacientes, 500 mil consultas) gerada por script; PostgreSQL em contêiner, o mesmo do tier 3, porque o H2 não representa o desempenho real | Integrante responsável pelo Cadastro e pelo Prontuário, uma vez antes da entrega do E3 |
+| **RNF04** | Os 99% mensais não podem ser observados em um semestre, então a medida do protótipo é o **tempo de recuperação**: script que derruba o contêiner da API (`docker kill`), consulta `/actuator/health` em laço e mede o tempo até `UP`, repetido 5 vezes (meta: ≤ 1 min). Uma restauração do `pg_dump` em banco limpo é cronometrada uma vez (meta: ≤ 1 h) | Ambiente Docker Compose da seção 2.4 | Integrante responsável pela implantação, uma vez antes da entrega do E3 |
+| **RNF05** | Teste ArchUnit no build impede que um módulo novo importe `agenda.domain` ou `prontuario.domain`. Verificação por revisão: um módulo esqueleto `faturamento` é criado em uma branch, e `git diff --stat` deve mostrar 0 arquivos alterados nesses dois pacotes. O "≤ 5 dias de equipe" é uma estimativa e não é medida no protótipo | Código do E3 | Build e revisor do PR |
+| **RNF06** | Coleção do Postman com o UC01 inteiro, contando as chamadas à API e se alguma exige novo login. Como a SPA não é entregue no protótipo (P1), os cliques não são medidos; a medida substituta é apresentada na linha do RNF06 da seção 5 | Base de referência da P2 e dois usuários de recepção | Integrante responsável pela Agenda |
+| **RNF07** | Teste de integração que cadastra um usuário e lê a coluna `senha_hash`, exigindo o prefixo BCrypt `$2`; a mesma suíte registra uma senha conhecida e a busca em texto no log da execução e no código deve encontrar 0 ocorrências | H2 e log da suíte | Build e revisor do PR |
 
 ## 6. Pontos em aberto
 

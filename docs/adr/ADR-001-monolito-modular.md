@@ -4,7 +4,7 @@
 
 **Contexto.** A clínica tem cerca de 20 profissionais e a equipe tem 3 pessoas para um semestre. Os drivers que mais pesam aqui são entrega no prazo, RNF05 (crescer por módulos sem reescrita) e RNF04 (99% no expediente). O Projeto Final exige extrair pelo menos um serviço do monólito.
 
-**Decisão.** Um único artefato implantável (a API), dividido em módulos de negócio com fronteiras explícitas: `cadastro`, `agenda`, `prontuario`, `relatorios`, `seguranca`. Módulos só se falam por interfaces `*Api` ou por eventos. As regras são verificadas por testes ArchUnit.
+**Decisão.** Um único artefato implantável (a API), dividido em módulos de negócio com fronteiras explícitas: `cadastro`, `agenda`, `prontuario`, `relatorios`, `seguranca`. Módulos só se falam por interfaces `*Api` ou por eventos. As regras são verificadas por testes ArchUnit. Em tiers, a implantação é de um servidor com dois contêineres Docker (API e PostgreSQL) sob Docker Compose, com reinício automático, backup diário e desligamento ordenado, como detalha a seção 2.4 de [`arquitetura.md`](../arquitetura.md#24-implantação-tiers-e-disponibilidade). É esse conjunto de mecanismos que sustenta a meta de 99% do RNF04.
 
 **Alternativas consideradas.**
 
@@ -21,10 +21,13 @@
 | Isolamento de falhas e escala independente (1) | 2 | 5 | 2 |
 | **Total ponderado** | **42** | **31** | **39** |
 
+**Revisão das notas após definir a implantação (seção 2.4).** As notas continuam valendo. Em "Disponibilidade com recursos mínimos", A e C ficam em 4 porque o mesmo mecanismo (restart do Docker mais backup) cobre os dois; nenhum chega a 5 porque há uma única instância sem failover. B fica em 2 porque cada serviço a mais exige o seu próprio healthcheck, restart e backup. Esse critério tem peso 1, então não muda a ordem: A segue 11 pontos à frente de B.
+
 **Consequências.**
 (+) Um único deploy e uma única transação cobrindo marcação + validação; fronteiras claras preparam a extração no PF.
 (+) Custo de infraestrutura mínimo, compatível com a meta de RNF04.
 (−) Uma falha derruba todos os módulos (sem isolamento); aceitável para a escala da clínica.
+(−) Servidor único é ponto único de falha, e o Docker só reinicia contêiner cujo processo terminou: uma API travada, mas viva, não volta sozinha. Os 99% dependem de reinício rápido e de restauração do banco em até 1 h; um servidor fora do ar por mais de 3 h num mês estoura a meta.
 (−) Exige disciplina: sem ArchUnit, um `import` indevido desfaz a modularidade. **Mitigação:** testes de arquitetura rodando no build.
 **Quando reavaliar:** se um módulo precisar escalar sozinho ou ter ciclo de deploy próprio (candidatos: Prontuário, Agenda).
 
