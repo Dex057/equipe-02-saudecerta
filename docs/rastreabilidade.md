@@ -6,7 +6,7 @@ Liga cada requisito à decisão que o sustenta, ao componente/tática que o impl
 |---|---|---|---|
 | **RF01** Cadastrar pacientes | ADR-003, ADR-006 | `CadastroController` → `CadastroService` → `Paciente` + `Cpf`; porta `PacienteRepository`; índice único de CPF ativo | Cadastro válido aparece na busca; CPF repetido é rejeitado (RN01) |
 | **RF02** Cadastrar profissionais e especialidades | ADR-003 | `Profissional` exige ao menos uma `Especialidade` | Teste unitário: salvar sem especialidade lança exceção |
-| **RF03** Definir agenda do profissional | ADR-003 | `Disponibilidade.gerarHorarios()`; `AgendaController` (`GET .../agenda`) | Faixa 08:00–12:00 com 30 min gera 8 horários |
+| **RF03** Definir agenda do profissional | ADR-003, ADR-005 | `Disponibilidade.gerarHorarios()`; `ValidadorDeDisponibilidade` confere cada marcação/remarcação contra os slots | Faixa 08:00–12:00 com 30 min gera 8 horários; POST/PATCH fora da faixa ou da grade não grava |
 | **RF04** Marcar consulta | ADR-005 | `AgendaService`, `Consulta` (status AGENDADA) | `POST /api/consultas` devolve `201` e `AGENDADA` |
 | **RF05** Remarcar/cancelar | ADR-005 | `Consulta.remarcar()` / `cancelar()`; `horario_ocupado = NULL` libera o horário | Cancelar e marcar de novo o mesmo horário funciona |
 | **RF06** Impedir conflito | ADR-005 | `ValidadorDeConflito.validarConflito()` + `UNIQUE (profissional_id, horario_ocupado)` | Teste unitário com dois agendamentos no mesmo horário; teste com duas threads (um `201`, um `409`) |
@@ -35,7 +35,7 @@ Confere que nenhuma decisão ficou sem requisito e nenhum RNF ficou sem decisão
 | ADR-002 Auditoria híbrida | RF07, RF10, RF12, RNF01, RNF02, RNF03 |
 | ADR-003 Hexagonal | RF01, RF02, RF03, RF07, RF08, RF09, RNF05 |
 | ADR-004 RBAC + titularidade + JWT | RF10, RF11, RN06, RNF01, RNF06, RNF07 |
-| ADR-005 Anti-conflito de horário | RF04, RF05, RF06, RN02, RNF06 |
+| ADR-005 Anti-conflito de horário | RF03, RF04, RF05, RF06, RN02, RNF06 |
 | ADR-006 Banco com propriedade por módulo | RF01, RF13, RN05, RNF03, RNF05 |
 
 Os requisitos RNF01 a RNF07 aparecem cada um em pelo menos uma ADR; os RF01 a RF13 também. As regras de negócio RN01–RN07 têm seu local de aplicação e teste em `arquitetura.md`, seção 4.2.

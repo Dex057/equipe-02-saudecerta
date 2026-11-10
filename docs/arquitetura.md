@@ -167,7 +167,8 @@ flowchart TB
 
     subgraph api["API SaúdeCerta — módulos prontuario, seguranca e shared"]
         pc["<b>ProntuarioController</b><br/>[api: @RestController, DTOs]<br/>Histórico, atendimento,<br/>prescrição e exames"]
-        sec["<b>SegurancaConfig + TitularidadePolicy</b><br/>[seguranca: Spring Security]<br/>@PreAuthorize por perfil;<br/>paciente só o próprio prontuário"]
+        sec["<b>SegurancaConfig + TitularidadePolicy</b><br/>[seguranca: Spring Security]<br/>Autenticação e autorização do caso de uso"]
+        dh["<b>AccessDeniedHandler + @ControllerAdvice</b><br/>[seguranca/shared]<br/>Captura negativas e publica evento"]
         ps["<b>ProntuarioService</b><br/>[application: @Service, @Transactional]<br/>Casos de uso do prontuário"]
         dom["<b>Atendimento (agregado)</b><br/>[domain]<br/>Atendimento, Prescricao, ItemDePrescricao,<br/>SolicitacaoDeExame, Complemento<br/>Regras RN03, RN04, RN05"]
         pr["<b>ProntuarioRepository</b><br/>[porta no domain]"]
@@ -185,8 +186,8 @@ flowchart TB
 
     spa -->|"REST"| pc
     spa -->|"REST (ADMIN)"| ac
-    pc -->|"autoriza antes de executar"| sec
     pc --> ps
+    ps -->|"@PreAuthorize no caso de uso"| sec
     ps --> dom
     ps --> pr
     ps --> cp
@@ -197,10 +198,12 @@ flowchart TB
 
     ps -->|"1. leitura: publica ProntuarioAcessado"| ev
     ps -->|"2. escrita: publica AtendimentoRegistrado"| ev
-    sec -->|"3. acesso negado: publica AcessoNegado"| ev
+    
     ev -.->|"1. assíncrono"| al
     ev -.->|"2 e 3. síncrono<br/>(2 na mesma transação)"| al
     al --> asv
+    sec -.->|"AccessDeniedException"| dh
+    dh -->|"3. publica AcessoNegado"| ev
     asv -->|"INSERT"| db
     ac --> asv
 
@@ -208,13 +211,13 @@ flowchart TB
     classDef comp fill:#85bbf0,stroke:#5d8cc0,color:#000
     classDef port fill:#d6e9fa,stroke:#5d8cc0,color:#000,stroke-dasharray:4 2
     class spa,db,agenda container
-    class pc,sec,ps,dom,pja,aa,ev,al,asv,ac comp
+    class pc,sec,dh,ps,dom,pja,aa,ev,al,asv,ac comp
     class pr,cp port
 ```
 
 #### 2.3.3 Zoom: módulo Agenda e o anti-conflito de horário
 
-Concentra a dor original da clínica (dois pacientes no mesmo horário). A regra RN02 é protegida em duas linhas de defesa: validação no domínio e restrição única no banco (ADR-005).
+Concentra a dor original da clínica (dois pacientes no mesmo horário). A disponibilidade/grade é validada pelo domínio antes do comando; para RN02, a validação de conflito no domínio é complementada pela restrição única do banco (ADR-005).
 
 ```mermaid
 flowchart TB
@@ -226,9 +229,10 @@ flowchart TB
         con["<b>Consulta (agregado)</b><br/>[domain]<br/>Status AGENDADA/REALIZADA/CANCELADA<br/>Regras RN02 (estado), RN07"]
         dsp["<b>Disponibilidade</b><br/>[domain]<br/>Gera horários de duração fixa"]
         val["<b>ValidadorDeConflito</b><br/>[domain service]<br/>validarConflito(): regra RN02"]
+        vd["<b>ValidadorDeDisponibilidade</b><br/>[domain service]<br/>Valida faixa e grade de slots"]
         cr["<b>ConsultaRepository</b><br/>[porta no domain]"]
         cdp["<b>CadastroPort</b><br/>[porta no domain]"]
-        cja["<b>ConsultaJpaAdapter</b><br/>[infra: Spring Data JPA]<br/>Traduz violação de UNIQUE em 409"]
+        cja["<b>ConsultaJpaAdapter</b><br/>[infra: Spring Data JPA]<br/>Traduz UNIQUE em exceção de domínio"]
         cda["<b>CadastroAdapter</b><br/>[infra]"]
         api2["<b>AgendaApi</b><br/>[application: porta de entrada pública]<br/>Usada por Prontuário e Relatórios"]
     end
@@ -240,10 +244,12 @@ flowchart TB
     agc --> ags
     ags --> con
     ags --> dsp
+    ags --> vd
     ags --> val
     ags --> cr
     ags --> cdp
     val --> cr
+    vd --> dsp
     cja -.->|"implementa"| cr
     cda -.->|"implementa"| cdp
     cja -->|"JPA"| db
@@ -254,7 +260,7 @@ flowchart TB
     classDef comp fill:#85bbf0,stroke:#5d8cc0,color:#000
     classDef port fill:#d6e9fa,stroke:#5d8cc0,color:#000,stroke-dasharray:4 2
     class spa,db,cad container
-    class agc,ags,con,dsp,val,cja,cda,api2 comp
+    class agc,ags,con,dsp,val,vd,cja,cda,api2 comp
     class cr,cdp port
 ```
 
@@ -293,7 +299,7 @@ Cada módulo repete as mesmas camadas (arquitetura hexagonal sobre monólito mod
 
 | Camada | Pacote | Responsabilidade | Tecnologia (Spring) | Pode depender de |
 |---|---|---|---|---|
-| Apresentação | `<módulo>.api` | Expor REST, traduzir HTTP ↔ DTO, validar entrada | `@RestController`, DTOs (records), Bean Validation | `application` |
+| Apresentação | `<módulo>.api` | Expor REST, traduzir HTTP ↔ DTO, validar entrada e mapear exceções para status HTTP | `@RestController`, DTOs (records), Bean Validation, `@ControllerAdvice` | `application` |
 | Aplicação | `<módulo>.application` | Orquestrar casos de uso, transações, autorização por caso de uso, publicar eventos | `@Service`, `@Transactional`, `@PreAuthorize` | `domain`, `*Api` de outros módulos |
 | Domínio | `<módulo>.domain` | Entidades, objetos de valor, regras RN01–RN07, portas (interfaces) | Java puro, **sem** Spring Data/JPA | nada (só `shared`) |
 | Persistência | `<módulo>.infra` | Adaptadores que implementam as portas; entidades JPA e mapeadores | `@Repository`, Spring Data JPA | `domain` |
@@ -311,7 +317,7 @@ Cada módulo repete as mesmas camadas (arquitetura hexagonal sobre monólito mod
 ```
 br.edu.ifpa.saudecerta
 ├── cadastro      (api, application, domain, infra)   Paciente, Profissional, Especialidade
-├── agenda        (api, application, domain, infra)   Consulta, Disponibilidade, ValidadorDeConflito
+├── agenda        (api, application, domain, infra)   Consulta, Disponibilidade, ValidadorDeDisponibilidade, ValidadorDeConflito
 ├── prontuario    (api, application, domain, infra)   Atendimento, Prescricao, SolicitacaoDeExame
 ├── relatorios    (api, application, infra)           consultas de leitura
 ├── seguranca     (api, application, domain, infra)   Usuario, perfis, JWT, TitularidadePolicy
@@ -321,41 +327,127 @@ br.edu.ifpa.saudecerta
 
 ### 3.3 Controle de acesso por perfil (RBAC)
 
-Aplicado com `@PreAuthorize` na camada de aplicação (ADR-004). "Próprio" significa que o recurso pertence ao usuário logado (regra de titularidade, RN06).
+Autenticação e autorização HTTP geral são aplicadas pelo Spring Security; cada caso de uso também é protegido por `@PreAuthorize` na camada de aplicação (ADR-004). "Próprio" significa que o recurso pertence ao usuário logado (regra de titularidade, RN06). O controller não decide permissões. Negativas do filtro e de `@PreAuthorize` passam pelo `AccessDeniedHandler` ou pelo `@ControllerAdvice`, que publicam `AcessoNegado` para o listener síncrono de Auditoria. O acesso permanece negado se a gravação falhar; a falha é registrada como `AUDITORIA_FALHA` e gera alerta, sem afirmar que a tentativa foi persistida.
 
 | Recurso | RECEPCAO | PROFISSIONAL | PACIENTE | ADMIN |
 |---|---|---|---|---|
 | Pacientes (cadastro) | criar, editar, ler | ler | ler o próprio | criar, editar, ler |
 | Profissionais e especialidades | ler | ler | — | criar, editar, ler |
-| Disponibilidade | ler | editar a própria | — | editar |
+| Disponibilidade | ler | ler e editar a própria | — | ler e editar |
 | Consultas (marcar, remarcar, cancelar) | **sim** | ler a própria agenda | ler as próprias | ler |
 | **Conteúdo clínico (prontuário)** | **negado** | ler e escrever | ler o próprio | **negado** |
 | Relatórios | — | — | — | ler |
 | Trilha de auditoria | — | — | — | ler |
 | Usuários e perfis | — | — | — | criar, editar, ler |
 
-Decisões de equilíbrio registradas no ADR-004: qualquer profissional pode abrir o prontuário de qualquer paciente (toda abertura é auditada), em vez de restringir a pacientes com consulta marcada com ele; o administrador não vê conteúdo clínico (menor privilégio).
+Decisões de equilíbrio registradas no ADR-004: qualquer profissional pode abrir o prontuário de qualquer paciente (toda abertura é auditada), em vez de restringir a pacientes com consulta marcada com ele; o administrador não vê conteúdo clínico (menor privilégio). A matriz se aplica a todas as rotas abaixo: "própria" é validado pela titularidade, e uma rota de escrita só aparece para perfis autorizados a executar aquela operação.
 
 ### 3.4 Contrato REST resumido
 
-Os endpoints do guia foram mantidos e completados com os necessários para cobrir todos os RFs.
+As rotas completam os fluxos dos casos de uso e cobrem RF01–RF15. Todas, salvo login, exigem `Authorization: Bearer <JWT>`. Os filtros de titularidade são aplicados também a rotas com `{id}`; `PROFISSIONAL (próprio)` significa o profissional vinculado ao token.
 
-| Método | Rota | Perfis | Requisito |
+| Método | Rota | Perfis autorizados | Requisito |
 |---|---|---|---|
 | POST | `/api/auth/login` | público | RF11 |
 | POST | `/api/pacientes` | RECEPCAO, ADMIN | RF01 |
 | GET | `/api/pacientes?nome=&page=&size=` | RECEPCAO, PROFISSIONAL, ADMIN | RF01, RNF03 |
+| GET | `/api/pacientes/{id}` | RECEPCAO, PROFISSIONAL, ADMIN; PACIENTE (próprio) | RF01, RF14 |
+| PUT | `/api/pacientes/{id}` | RECEPCAO, ADMIN | RF01 |
+| GET | `/api/profissionais` | RECEPCAO, PROFISSIONAL, ADMIN | RF02, UC01 |
 | POST | `/api/profissionais` | ADMIN | RF02 |
-| PUT | `/api/profissionais/{id}/disponibilidades` | PROFISSIONAL (própria), ADMIN | RF03 |
-| GET | `/api/profissionais/{id}/agenda?data=` | RECEPCAO, PROFISSIONAL, ADMIN | RF03 |
+| PUT | `/api/profissionais/{id}` | ADMIN | RF02 |
+| GET | `/api/especialidades` | RECEPCAO, PROFISSIONAL, ADMIN | RF02, UC01 |
+| POST | `/api/especialidades` | ADMIN | RF02 |
+| PUT | `/api/especialidades/{id}` | ADMIN | RF02 |
+| GET | `/api/profissionais/{id}/disponibilidades` | RECEPCAO, ADMIN; PROFISSIONAL (próprio) | RF03 |
+| PUT | `/api/profissionais/{id}/disponibilidades` | ADMIN; PROFISSIONAL (próprio) | RF03 |
+| GET | `/api/profissionais/{id}/agenda?data=` | RECEPCAO, ADMIN; PROFISSIONAL (próprio) | RF03, UC01 |
+| GET | `/api/consultas?data=&profissionalId=` | RECEPCAO, ADMIN; PROFISSIONAL (próprio) | UC02 |
+| GET | `/api/pacientes/{id}/consultas` | PACIENTE (próprio), ADMIN | RF14 |
 | POST | `/api/consultas` | RECEPCAO | RF04, RF06 |
 | PATCH | `/api/consultas/{id}` | RECEPCAO | RF05 |
 | POST | `/api/consultas/{id}/atendimento` | PROFISSIONAL | RF07, RF08, RF09 |
+| POST | `/api/atendimentos/{id}/complementos` | PROFISSIONAL | RN05 |
+| PATCH | `/api/exames/{id}/status` | PROFISSIONAL | RF09 |
 | GET | `/api/pacientes/{id}/prontuario?page=` | PROFISSIONAL, PACIENTE (próprio) | RF10, RF12 |
 | GET | `/api/relatorios/consultas?de=&ate=&profissionalId=&especialidadeId=` | ADMIN | RF13 |
 | GET | `/api/auditoria?pacienteId=&usuarioId=&de=&ate=` | ADMIN | RF12, RNF02 |
+| GET | `/api/usuarios` | ADMIN | RF15 |
+| POST | `/api/usuarios` | ADMIN | RF15 |
+| PUT | `/api/usuarios/{id}` | ADMIN | RF15 |
+| PATCH | `/api/usuarios/{id}/status` | ADMIN | RF15 |
 
-Códigos de erro relevantes: `403` acesso negado (RNF01), `409` horário ocupado (RF06), `422` regra de negócio violada (RN03, RN07, RN05).
+`PATCH /api/consultas/{id}` recebe uma operação de remarcação (`dataHora`) ou cancelamento (`status: "CANCELADA"`). O horário só é liberado quando a transação de cancelamento confirma. Uma remarcação válida troca o horário na mesma transação; falha por conflito mantém a consulta no horário anterior. `PATCH /api/exames/{id}/status` define a operação REST de RF09; a decisão de agregado e persistência deve permanecer coerente com o modelo de domínio da issue #9.
+
+**Códigos de resposta e erro.** Erros usam o envelope `{"codigo":"...","mensagem":"...","timestamp":"..."}`; mensagens não incluem dados clínicos nem tokens.
+
+| HTTP | Quando é usado |
+|---|---|
+| `400 Bad Request` | JSON malformado, parâmetro ausente ou formato inválido (ex.: data impossível). |
+| `401 Unauthorized` | JWT ausente, inválido ou expirado; credenciais de login inválidas. |
+| `403 Forbidden` | Usuário autenticado sem perfil/permissão ou tentativa de acessar recurso de outro titular (RN06). A negativa publica `AcessoNegado`; falha na persistência continua bloqueando o acesso e gera `AUDITORIA_FALHA` e alerta. |
+| `404 Not Found` | Recurso identificado não existe. |
+| `409 Conflict` | Slot ocupado por outra consulta AGENDADA em uma marcação ou remarcação (RF06); a aplicação não expõe a exceção do banco. |
+| `405 Method Not Allowed` | Método não suportado pela rota; em particular, não há PUT/DELETE para registros clínicos, em respeito ao somente-anexação de RN05. |
+| `422 Unprocessable Entity` | Entrada bem formada que viola regra de negócio: horário fora da disponibilidade/grade, consulta futura (RN03), cancelamento fora de AGENDADA (RN07) ou transição de exame inválida. |
+
+**Exemplos de payload do núcleo do E3** (IDs são ilustrativos; os dados entre `< >` são substituídos por valores válidos):
+
+```http
+POST /api/pacientes
+Content-Type: application/json
+```
+```json
+{
+  "nome": "Ana Exemplo",
+  "cpf": "<CPF válido de teste>",
+  "dataNascimento": "1990-04-15",
+  "telefone": "<telefone de teste>",
+  "email": "ana@example.test"
+}
+```
+
+```http
+POST /api/consultas
+Content-Type: application/json
+```
+```json
+{
+  "pacienteId": 123,
+  "profissionalId": 45,
+  "dataHora": "2026-11-12T09:00:00"
+}
+```
+
+```http
+POST /api/consultas/678/atendimento
+Content-Type: application/json
+```
+```json
+{
+  "queixa": "Dor de garganta há dois dias",
+  "evolucao": "Sem febre; exame clínico registrado.",
+  "conduta": "Hidratação e retorno se houver piora.",
+  "prescricoes": [
+    {
+      "itens": [
+        {
+          "medicamento": "<medicamento>",
+          "dose": "<dose>",
+          "posologia": "<posologia>"
+        }
+      ]
+    }
+  ],
+  "solicitacoesExame": [
+    {
+      "tipoExame": "<tipo>"
+    }
+  ]
+}
+```
+
+As rotas e permissões acima cobrem: RF01 (criar, buscar, ler e manter pacientes), RF02 (profissionais/especialidades), RF03 (disponibilidade/agenda), RF04–RF06 (marcação, remarcação/cancelamento e conflito), RF07–RF09 (atendimento, prescrição e exames), RF10–RF12 (histórico, autenticação e auditoria), RF13 (relatórios), RF14 (dados e consultas próprias) e RF15 (usuários/perfis). Não há perfil na matriz 3.3 com permissão para operação sem rota correspondente; não há rota protegida sem perfil declarado.
 
 ---
 
@@ -504,7 +596,7 @@ Legenda: linha cheia com losango = composição dentro do mesmo agregado; linha 
 | Regra | Onde é imposta | Como é testada |
 |---|---|---|
 | RN01 | `Cpf` + `CadastroService` consulta o repositório; índice único no banco para CPF ativo | cadastrar o mesmo CPF duas vezes → erro |
-| RN02 | `ValidadorDeConflito` (domínio) + restrição `UNIQUE (profissional_id, horario_ocupado)` (ADR-005) | **teste obrigatório do E3**: dois agendamentos no mesmo horário; teste com duas threads |
+| RN02 | `ValidadorDeDisponibilidade` + `ValidadorDeConflito` (domínio) e restrição `UNIQUE (profissional_id, horario_ocupado)` (ADR-005) | **testes obrigatórios do E3:** slot fora da disponibilidade/grade não grava; dois POSTs concorrentes no mesmo slot resultam em uma criação e um `409`; PATCH de remarcação concorrente não perde o slot anterior |
 | RN03 | `Consulta.marcarRealizada(hoje)` recebe a data do `Clock` injetado | consulta futura → erro 422; `Clock` fixo no teste |
 | RN04 | `Prescricao` e `SolicitacaoDeExame` só são criadas por métodos do `Atendimento`; FK `NOT NULL` | impossível construir sem atendimento |
 | RN05 | `Atendimento` sem setters; `ProntuarioRepository` não tem `update` nem `delete`; só `adicionarComplemento` | **teste obrigatório do E3**: não existe operação de alterar/apagar; tabela sem `DELETE` para o usuário da aplicação |
@@ -519,7 +611,7 @@ Cada cenário segue o formato do guia (fonte, estímulo, artefato, ambiente, res
 
 | ID | Fonte | Estímulo | Artefato | Ambiente | Resposta | Medida | Tática / ADR |
 |---|---|---|---|---|---|---|---|
-| **RNF01** Segurança | Usuário autenticado sem perfil clínico (ex.: recepcionista) ou paciente tentando ver prontuário alheio | `GET /api/pacientes/{id}/prontuario` | Prontuário + Segurança | Operação normal | Responde `403` sem nenhum dado clínico; publica `AcessoNegado`; o listener síncrono grava o registro antes de a resposta sair | 100% das tentativas indevidas bloqueadas **e** registradas | RBAC, menor privilégio, titularidade — ADR-004 |
+| **RNF01** Segurança | Usuário autenticado sem perfil clínico (ex.: recepcionista) ou paciente tentando ver prontuário alheio | `GET /api/pacientes/{id}/prontuario` | Prontuário + Segurança | Operação normal | `AccessDeniedHandler` ou `@ControllerAdvice` captura a negativa, publica `AcessoNegado` e o listener síncrono grava o registro antes da resposta `403`; falha de persistência mantém o acesso negado e gera `AUDITORIA_FALHA` e alerta | 100% das tentativas indevidas bloqueadas; tentativas registradas em operação normal | RBAC, titularidade, evento síncrono — ADR-004, ADR-002 |
 | **RNF02** Auditabilidade | Profissional | Abre o prontuário de um paciente | Prontuário + Auditoria | Operação normal | Publica `ProntuarioAcessado`; listener grava usuário, paciente, data/hora e ação | Disponível ao admin em ≤ 1 min (E1); *meta de projeto*: ≤ 5 s | Evento assíncrono, registro imutável — ADR-002 |
 | **RNF03** Desempenho | Recepcionista | Busca paciente pelo nome | `GET /api/pacientes?nome=` + índice | Uso normal, base de referência da premissa P2 | Lista paginada (20 itens) a partir de índice de nome normalizado | p95 < 2 s. *Meta de projeto*: abrir o histórico (primeira página) também com p95 < 2 s | Índice, paginação, auditoria fora do caminho crítico — ADR-002, ADR-006 |
 | **RNF04** Disponibilidade | Falha de processo ou de infraestrutura | A API cai durante o expediente | Contêiner da API | 12 h/dia de funcionamento | Reinício automático pelo Docker (`restart: unless-stopped`); `/actuator/health` indica quando voltou; auditoria pendente é drenada no desligamento ordenado; mecanismos detalhados na seção 2.4 | ≥ 99% por mês no período (≈ 3 h de indisponibilidade tolerada, supondo 26 dias × 12 h); implantações fora do expediente | Healthcheck, política de restart do Docker, backup diário com `pg_dump` — seção 2.4, ADR-001 |
@@ -534,7 +626,7 @@ Os pares de requisitos que se puxam em direções opostas e como a arquitetura o
 | Tradeoff | Quem perde o quê | Resolução |
 |---|---|---|
 | **RNF02 × RNF03** — auditar tudo × leitura rápida | Auditoria síncrona penaliza a leitura; assíncrona pode perder um registro se o processo morrer | Auditoria **híbrida**: leitura assíncrona, escrita e acesso negado síncronos, todos por evento (o módulo de negócio não conhece a Auditoria); risco residual declarado e com plano de evolução (outbox). A gravação síncrona na escrita acrescenta um `INSERT` à transação do atendimento; escrita é rara, então o custo é pequeno. ADR-002 |
-| **RNF01 × RNF06** — controle forte × recepção ágil | Perfis e confirmações em excesso travam o balcão | O perfil é resolvido **uma vez**, no login (claims do JWT); a checagem por requisição é em memória, sem consulta ao banco nem confirmação extra. A restrição forte fica onde o risco está (prontuário), não na agenda. ADR-004 |
+| **RNF01 × RNF06** — controle forte × recepção ágil | Perfis e confirmações em excesso travam o balcão; token longo amplia a janela de revogação | O perfil é resolvido no login e a autorização por requisição é em memória, sem confirmação por ação. No E3 o JWT expira em 8 h (um turno): a recepção evita relogins durante o turno, mas token emitido não é revogado antes do vencimento; o risco é aceito e refresh revogável fica para o Projeto Final. ADR-004 |
 | **RNF05 × esforço** — modularidade × velocidade | Domínio puro com mapeadores dá mais classes | Aceito só nos agregados com regra; custo contido por mapeamento manual simples. ADR-003 |
 | **RNF04 × custo** — disponibilidade × simplicidade | Uma instância não tem failover | A meta de 99% em horário comercial é atingível com reinício rápido; réplicas custam mais do que o requisito exige. ADR-001 |
 | **RNF02 × RNF03 na escrita** — auditar alterações × gravar rápido | Cada atendimento, prescrição, exame ou complemento ganha um `INSERT` síncrono na mesma transação, e uma falha na auditoria desfaz a alteração clínica | Aceito: escrita é rara perto da leitura, e "nenhuma alteração sem rastro" vale mais que alguns milissegundos. O custo é medido no E3 (seção 5.2): *meta de projeto* de acréscimo p95 < 200 ms no `POST` do atendimento. ADR-002 |
@@ -558,5 +650,5 @@ Todos os cenários da tabela acima têm fonte, estímulo, artefato, ambiente, re
 - **Front-end (P1):** tecnologia e implantação da SPA ainda não definidas.
 - **Volumes (P2):** a base de referência é uma suposição; validar com dados sintéticos no E3.
 - **Auditoria (ADR-002):** o risco residual da leitura assíncrona é aceito; reavaliar se houver exigência de zero perda.
-- **Refresh token (ADR-004):** fica para o Projeto Final; o protótipo usa só o token de acesso.
+- **Sessão (ADR-004):** o E3 usa JWT de acesso com validade de 8 horas e sem refresh; desativação de usuário não revoga token já emitido. Refresh revogável ou sessão server-side ficam para o Projeto Final.
 - **Projeto Final:** o primeiro candidato à extração é o Prontuário (auditoria já desacoplada por eventos) ou a Agenda (ADR-005 e a porta `CadastroPort` já isolam a dependência). A escolha e o novo diagrama de contêineres ficam para aquela entrega.
