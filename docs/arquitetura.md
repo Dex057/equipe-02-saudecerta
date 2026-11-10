@@ -198,7 +198,7 @@ flowchart TB
 
     ps -->|"1. leitura: publica ProntuarioAcessado"| ev
     ps -->|"2. escrita: publica AtendimentoRegistrado"| ev
-    sec -->|"3. acesso negado: publica AcessoNegado"| ev
+    
     ev -.->|"1. assíncrono"| al
     ev -.->|"2 e 3. síncrono<br/>(2 na mesma transação)"| al
     al --> asv
@@ -628,7 +628,7 @@ Os pares de requisitos que se puxam em direções opostas e como a arquitetura o
 | Tradeoff | Quem perde o quê | Resolução |
 |---|---|---|
 | **RNF02 × RNF03** — auditar tudo × leitura rápida | Auditoria síncrona penaliza a leitura; assíncrona pode perder um registro se o processo morrer | Auditoria **híbrida**: leitura assíncrona, escrita e acesso negado síncronos, todos por evento (o módulo de negócio não conhece a Auditoria); risco residual declarado e com plano de evolução (outbox). A gravação síncrona na escrita acrescenta um `INSERT` à transação do atendimento; escrita é rara, então o custo é pequeno. ADR-002 |
-| **RNF01 × RNF06** — controle forte × recepção ágil | Perfis e confirmações em excesso travam o balcão | O perfil é resolvido **uma vez**, no login (claims do JWT); a checagem por requisição é em memória, sem consulta ao banco nem confirmação extra. A restrição forte fica onde o risco está (prontuário), não na agenda. ADR-004 |
+| **RNF01 × RNF06** — controle forte × recepção ágil | Perfis e confirmações em excesso travam o balcão; token longo amplia a janela de revogação | O perfil é resolvido no login e a autorização por requisição é em memória, sem confirmação por ação. No E3 o JWT expira em 8 h (um turno): a recepção evita relogins durante o turno, mas token emitido não é revogado antes do vencimento; o risco é aceito e refresh revogável fica para o Projeto Final. ADR-004 |
 | **RNF05 × esforço** — modularidade × velocidade | Domínio puro com mapeadores dá mais classes | Aceito só nos agregados com regra; custo contido por mapeamento manual simples. ADR-003 |
 | **RNF04 × custo** — disponibilidade × simplicidade | Uma instância não tem failover | A meta de 99% em horário comercial é atingível com reinício rápido; réplicas custam mais do que o requisito exige. ADR-001 |
 | **RNF02 × RNF03 na escrita** — auditar alterações × gravar rápido | Cada atendimento, prescrição, exame ou complemento ganha um `INSERT` síncrono na mesma transação, e uma falha na auditoria desfaz a alteração clínica | Aceito: escrita é rara perto da leitura, e "nenhuma alteração sem rastro" vale mais que alguns milissegundos. O custo é medido no E3 (seção 5.2): *meta de projeto* de acréscimo p95 < 200 ms no `POST` do atendimento. ADR-002 |

@@ -1,6 +1,6 @@
 # ADR-004 — Controle de acesso por perfil (RBAC), titularidade e JWT por turno
 
-**Status:** Aceita (20/10/2026). Convenções das tabelas de custo/benefício: [README](README.md).
+**Status:** Aceita (20/10/2026), revisada em 10/11/2026. Convenções das tabelas de custo/benefício: [README](README.md).
 
 **Contexto.** RF11 exige acesso por perfil (4 perfis); RN06 exige que paciente só veja os próprios dados e que a recepção não veja conteúdo clínico. Isso é mais do que RBAC puro: "só o próprio" depende do recurso. Ao mesmo tempo, a recepção no horário de pico (RNF06) não pode sofrer passos extras de segurança.
 

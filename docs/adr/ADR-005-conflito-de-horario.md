@@ -1,6 +1,6 @@
 # ADR-005 — Conflito de horário: validação no domínio mais restrição única no banco
 
-**Status:** Aceita (20/10/2026). Convenções das tabelas de custo/benefício: [README](README.md).
+**Status:** Aceita (20/10/2026), revisada em 10/11/2026. Convenções das tabelas de custo/benefício: [README](README.md).
 
 **Contexto.** Este é o problema que originou o projeto: a planilha permitiu o mesmo profissional com dois pacientes no mesmo horário porque duas pessoas escreviam ao mesmo tempo. Uma validação só na aplicação (ler "o horário está livre?" e depois gravar) tem uma janela de corrida: dois pedidos simultâneos leem "livre" e ambos gravam. RN02 só vale para consultas **AGENDADA**: uma consulta cancelada libera o horário (RF05). Pela premissa P3, "mesmo horário" é a mesma data/hora de início, e os horários válidos são os slots gerados a partir da disponibilidade do profissional.
 
