@@ -256,6 +256,31 @@ flowchart TB
     class cr,cdp port
 ```
 
+### 2.4 Implantação: tiers e disponibilidade
+
+**Camada × tier.** *Camada* é uma divisão lógica do código (`api / application / domain / infra`, seção 3.1) e existe dentro de um mesmo processo. *Tier* é uma divisão física: onde cada parte roda. As quatro camadas de todos os módulos ficam juntas no mesmo tier de aplicação.
+
+| Tier | Onde roda | O que roda | Observação |
+|---|---|---|---|
+| 1. Apresentação | Navegador do usuário | SPA (contêiner Aplicação Web da seção 2.2) | Não é entregue no protótipo (P1); a API é exercitada por Postman/Insomnia |
+| 2. Aplicação | Servidor da clínica, contêiner Docker `api` | Monólito modular Spring Boot (Java 17): camadas `api`, `application`, `domain` e `infra` de todos os módulos, JWT, RBAC e auditoria | Uma instância (P4) |
+| 3. Dados | Mesmo servidor, contêiner Docker `db` | PostgreSQL com volume persistente; H2 em memória em dev/teste | Só a API acessa o banco; a porta do banco não é publicada fora do servidor |
+
+Os dois contêineres sobem juntos por um `docker-compose.yml`. É uma implantação em um único servidor: simples e barata, mas esse servidor é ponto único de falha, o que a premissa P4 e o ADR-001 aceitam.
+
+**Como a meta de 99% é cumprida (RNF04).** No expediente de 12 h/dia, 26 dias por mês, são 312 h, e 1% de tolerância equivale a cerca de 3 h de indisponibilidade por mês. Cada mecanismo abaixo ataca uma causa de queda:
+
+| Causa de queda | Mecanismo | Efeito esperado |
+|---|---|---|
+| Processo da API termina (erro fatal, falta de memória) | `restart: unless-stopped` no Compose e a JVM iniciada com `-XX:+ExitOnOutOfMemoryError`, para que a falta de memória derrube o processo em vez de deixá-lo travado | A API volta sozinha em cerca de 1 minuto (meta de projeto, a medir no E3) |
+| Servidor reiniciado (queda de energia, atualização do sistema operacional) | Serviço do Docker iniciado com o sistema operacional; a política `unless-stopped` religa os dois contêineres | Volta sem intervenção, na ordem `db` e depois `api` (`depends_on` com `condition: service_healthy`) |
+| Atualização de versão | Feita fora do expediente, com `docker stop` e `stop_grace_period: 30s`, mais `server.shutdown=graceful` no Spring | A fila de auditoria pendente é drenada (ADR-002) e nenhuma requisição é cortada no meio |
+| Perda ou corrupção de dados | Backup diário às 02:00 com `pg_dump`, copiado para um segundo disco ou máquina, mantendo 7 dias; restauração testada uma vez antes da entrega do E3 | Perda máxima de 24 h de dados (meta de projeto); a restauração conta no orçamento de indisponibilidade |
+
+O `/actuator/health` também é o `healthcheck` do Compose, e é por ele que se sabe que a API voltou. **Limite declarado:** o Docker só reinicia contêiner cujo processo terminou; uma API travada, mas ainda viva, aparece como `unhealthy` e não é reiniciada sozinha. Esse caso fica coberto por monitoramento manual no protótipo, e adotar um supervisor para reiniciar contêineres `unhealthy` fica para o Projeto Final.
+
+Uma queda de 1 minuto da API consome menos de 1% do orçamento de 3 h; uma restauração completa do banco, estimada em até 1 h, consome cerca de um terço. Dois incidentes graves no mesmo mês ainda cabem na meta; um servidor físico fora do ar por mais de 3 h, não.
+
 ---
 
 ## 3. Camadas e componentes
@@ -495,7 +520,7 @@ Cada cenário segue o formato do guia (fonte, estímulo, artefato, ambiente, res
 | **RNF01** Segurança | Usuário autenticado sem perfil clínico (ex.: recepcionista) ou paciente tentando ver prontuário alheio | `GET /api/pacientes/{id}/prontuario` | Prontuário + Segurança | Operação normal | Responde `403` sem nenhum dado clínico; grava `AcessoNegado` de forma síncrona | 100% das tentativas indevidas bloqueadas **e** registradas | RBAC, menor privilégio, titularidade — ADR-004 |
 | **RNF02** Auditabilidade | Profissional | Abre o prontuário de um paciente | Prontuário + Auditoria | Operação normal | Publica `ProntuarioAcessado`; listener grava usuário, paciente, data/hora e ação | Disponível ao admin em ≤ 1 min (E1); *meta de projeto*: ≤ 5 s | Evento assíncrono, registro imutável — ADR-002 |
 | **RNF03** Desempenho | Recepcionista | Busca paciente pelo nome | `GET /api/pacientes?nome=` + índice | Uso normal, base de referência da premissa P2 | Lista paginada (20 itens) a partir de índice de nome normalizado | p95 < 2 s. *Meta de projeto*: abrir o histórico (primeira página) também com p95 < 2 s | Índice, paginação, auditoria fora do caminho crítico — ADR-002, ADR-006 |
-| **RNF04** Disponibilidade | Falha de processo ou de infraestrutura | A API cai durante o expediente | Contêiner da API | 12 h/dia de funcionamento | Reinício automático; `/actuator/health` indica quando voltou; auditoria pendente é drenada no desligamento ordenado | ≥ 99% por mês no período (≈ 3 h de indisponibilidade tolerada, supondo 26 dias × 12 h); implantações fora do expediente | Healthcheck, restart automático, backup diário — ADR-001 |
+| **RNF04** Disponibilidade | Falha de processo ou de infraestrutura | A API cai durante o expediente | Contêiner da API | 12 h/dia de funcionamento | Reinício automático pelo Docker (`restart: unless-stopped`); `/actuator/health` indica quando voltou; auditoria pendente é drenada no desligamento ordenado; mecanismos detalhados na seção 2.4 | ≥ 99% por mês no período (≈ 3 h de indisponibilidade tolerada, supondo 26 dias × 12 h); implantações fora do expediente | Healthcheck, política de restart do Docker, backup diário com `pg_dump` — seção 2.4, ADR-001 |
 | **RNF05** Modificabilidade | Desenvolvedor | Incluir o módulo Faturamento | Núcleo agenda/prontuário | Evolução futura | Novo módulo usa `AgendaApi` e eventos; nenhum código de `agenda` ou `prontuario` é alterado | ≤ 5 dias de equipe; **0** arquivos alterados em `agenda.domain` e `prontuario.domain` | Módulos, portas, eventos — ADR-001, ADR-003, ADR-006 |
 | **RNF06** Usabilidade | Recepcionista | Marca uma consulta simples (UC01) | Agenda + SPA | Horário de pico, telefone e balcão ao mesmo tempo | Horários livres em uma chamada; marcação atômica; conflito devolve `409` imediato com mensagem | ≤ 1 min e ≤ 5 cliques a partir da tela inicial | Endpoint de horários livres, `POST` único, sem reautenticação por ação — ADR-005, ADR-004 |
 | **RNF07** Credenciais | Revisor de código ou quem tem acesso ao banco | Lê a tabela `usuario` e o código | Segurança | Qualquer | Só existe `senha_hash` (BCrypt com sal); senha nunca é gravada nem logada | 0 ocorrências de senha em texto puro no banco, código ou logs | `BCryptPasswordEncoder` — ADR-004 |
