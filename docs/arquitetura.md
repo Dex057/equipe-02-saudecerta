@@ -70,7 +70,7 @@ flowchart TB
 
 ### 2.2 Nível 2 — Contêineres
 
-Abre o SaúdeCerta em unidades executáveis/implantáveis. São três: a aplicação web, a API (monólito modular, ADR-001) e o banco de dados. A auditoria **não** é um contêiner separado: roda dentro da API, de forma assíncrona (ADR-002).
+Abre o SaúdeCerta em unidades executáveis/implantáveis. São três: a aplicação web, a API (monólito modular, ADR-001) e o banco de dados. A auditoria **não** é um contêiner separado: roda dentro da API, alimentada por eventos: assíncrona na leitura e síncrona na escrita e no acesso negado (ADR-002).
 
 ```mermaid
 flowchart TB
@@ -98,7 +98,7 @@ O contêiner **API SaúdeCerta** é dividido em módulos de negócio (pacotes de
 
 #### 2.3.1 Visão geral dos módulos
 
-As setas cheias são dependências de código permitidas (um módulo só usa a interface pública `*Api` do outro); as tracejadas são eventos. Segurança é transversal (autenticação e autorização por perfil valem para todos os módulos), então as setas de autorização não foram desenhadas para não poluir o diagrama. Os eventos (`ProntuarioAcessado`, `AcessoNegado`) ficam em `shared.eventos`, de modo que **nenhum módulo de negócio depende de Auditoria**.
+As setas cheias são dependências de código permitidas (um módulo só usa a interface pública `*Api` do outro); as tracejadas são eventos. Segurança é transversal (autenticação e autorização por perfil valem para todos os módulos), então as setas de autorização não foram desenhadas para não poluir o diagrama. Os eventos (`ProntuarioAcessado`, `AtendimentoRegistrado`, `AcessoNegado`) ficam em `shared.eventos`, de modo que **nenhum módulo de negócio depende de Auditoria**: Prontuário e Segurança só publicam eventos, e o `AuditoriaListener` os consome.
 
 ```mermaid
 flowchart LR
@@ -130,7 +130,8 @@ flowchart LR
     rel -->|"AgendaApi (leitura)"| age
 
     pro -.->|"evento ProntuarioAcessado<br/>(assíncrono)"| shr
-    seg -.->|"evento AcessoNegado"| shr
+    pro -.->|"evento AtendimentoRegistrado<br/>(síncrono)"| shr
+    seg -.->|"evento AcessoNegado<br/>(síncrono)"| shr
     shr -.->|"entrega ao listener"| aud
 
     cad --> db
@@ -158,7 +159,7 @@ flowchart LR
 
 #### 2.3.2 Zoom: módulo Prontuário e fluxo de auditoria
 
-É o ponto mais sensível do sistema e onde a tensão entre RNF02 e RNF03 se resolve. Três caminhos de auditoria convivem (ADR-002): **leitura** (assíncrona, via evento), **escrita** (síncrona, na mesma transação do atendimento) e **acesso negado** (síncrona).
+É o ponto mais sensível do sistema e onde a tensão entre RNF02 e RNF03 se resolve. Três caminhos de auditoria convivem (ADR-002), e os três chegam à Auditoria por evento, sem que Prontuário ou Segurança chamem o `AuditoriaService`: **leitura** (`ProntuarioAcessado`, listener assíncrono), **escrita** (`AtendimentoRegistrado`, listener síncrono que roda na mesma transação do atendimento; se a gravação falhar, a alteração clínica também falha) e **acesso negado** (`AcessoNegado`, listener síncrono; se a gravação falhar, o acesso continua negado e a falha vai para o log `AUDITORIA_FALHA`).
 
 ```mermaid
 flowchart TB
@@ -173,8 +174,8 @@ flowchart TB
         cp["<b>ConsultaPort</b><br/>[porta no domain]"]
         pja["<b>ProntuarioJpaAdapter</b><br/>[infra: Spring Data JPA]"]
         aa["<b>AgendaAdapter</b><br/>[infra]"]
-        ev["<b>ProntuarioAcessado / AcessoNegado</b><br/>[shared.eventos]<br/>Eventos de domínio"]
-        al["<b>AuditoriaListener</b><br/>[seguranca.auditoria: @Async @EventListener]<br/>Fila limitada, 3 tentativas,<br/>fallback em log estruturado"]
+        ev["<b>ProntuarioAcessado / AtendimentoRegistrado / AcessoNegado</b><br/>[shared.eventos]<br/>Eventos de domínio"]
+        al["<b>AuditoriaListener</b><br/>[seguranca.auditoria: @EventListener]<br/>Leitura: @Async, fila limitada, 3 tentativas,<br/>fallback em log estruturado<br/>Escrita e negado: síncrono"]
         asv["<b>AuditoriaService</b><br/>[seguranca.auditoria]<br/>Grava RegistroAuditoria"]
         ac["<b>AuditoriaController</b><br/>[seguranca.auditoria: api]<br/>Consulta da trilha (ADMIN)"]
     end
@@ -194,11 +195,12 @@ flowchart TB
     pja -->|"JPA"| db
     aa -->|"chama"| agenda
 
-    ps -->|"1. leitura: publica evento"| ev
-    ev -.->|"assíncrono"| al
+    ps -->|"1. leitura: publica ProntuarioAcessado"| ev
+    ps -->|"2. escrita: publica AtendimentoRegistrado"| ev
+    sec -->|"3. acesso negado: publica AcessoNegado"| ev
+    ev -.->|"1. assíncrono"| al
+    ev -.->|"2 e 3. síncrono<br/>(2 na mesma transação)"| al
     al --> asv
-    ps -->|"2. escrita: registra na mesma transação"| asv
-    sec -->|"3. acesso negado: registra (síncrono)"| asv
     asv -->|"INSERT"| db
     ac --> asv
 
@@ -314,7 +316,7 @@ br.edu.ifpa.saudecerta
 ├── relatorios    (api, application, infra)           consultas de leitura
 ├── seguranca     (api, application, domain, infra)   Usuario, perfis, JWT, TitularidadePolicy
 │   └── auditoria (api, application, domain, infra)   RegistroAuditoria, AuditoriaListener
-└── shared        (eventos, excecoes, config)         ProntuarioAcessado, AcessoNegado, @ControllerAdvice
+└── shared        (eventos, excecoes, config)         ProntuarioAcessado, AtendimentoRegistrado, AcessoNegado, @ControllerAdvice
 ```
 
 ### 3.3 Controle de acesso por perfil (RBAC)
@@ -517,7 +519,7 @@ Cada cenário segue o formato do guia (fonte, estímulo, artefato, ambiente, res
 
 | ID | Fonte | Estímulo | Artefato | Ambiente | Resposta | Medida | Tática / ADR |
 |---|---|---|---|---|---|---|---|
-| **RNF01** Segurança | Usuário autenticado sem perfil clínico (ex.: recepcionista) ou paciente tentando ver prontuário alheio | `GET /api/pacientes/{id}/prontuario` | Prontuário + Segurança | Operação normal | Responde `403` sem nenhum dado clínico; grava `AcessoNegado` de forma síncrona | 100% das tentativas indevidas bloqueadas **e** registradas | RBAC, menor privilégio, titularidade — ADR-004 |
+| **RNF01** Segurança | Usuário autenticado sem perfil clínico (ex.: recepcionista) ou paciente tentando ver prontuário alheio | `GET /api/pacientes/{id}/prontuario` | Prontuário + Segurança | Operação normal | Responde `403` sem nenhum dado clínico; publica `AcessoNegado`; o listener síncrono grava o registro antes de a resposta sair | 100% das tentativas indevidas bloqueadas **e** registradas | RBAC, menor privilégio, titularidade — ADR-004 |
 | **RNF02** Auditabilidade | Profissional | Abre o prontuário de um paciente | Prontuário + Auditoria | Operação normal | Publica `ProntuarioAcessado`; listener grava usuário, paciente, data/hora e ação | Disponível ao admin em ≤ 1 min (E1); *meta de projeto*: ≤ 5 s | Evento assíncrono, registro imutável — ADR-002 |
 | **RNF03** Desempenho | Recepcionista | Busca paciente pelo nome | `GET /api/pacientes?nome=` + índice | Uso normal, base de referência da premissa P2 | Lista paginada (20 itens) a partir de índice de nome normalizado | p95 < 2 s. *Meta de projeto*: abrir o histórico (primeira página) também com p95 < 2 s | Índice, paginação, auditoria fora do caminho crítico — ADR-002, ADR-006 |
 | **RNF04** Disponibilidade | Falha de processo ou de infraestrutura | A API cai durante o expediente | Contêiner da API | 12 h/dia de funcionamento | Reinício automático pelo Docker (`restart: unless-stopped`); `/actuator/health` indica quando voltou; auditoria pendente é drenada no desligamento ordenado; mecanismos detalhados na seção 2.4 | ≥ 99% por mês no período (≈ 3 h de indisponibilidade tolerada, supondo 26 dias × 12 h); implantações fora do expediente | Healthcheck, política de restart do Docker, backup diário com `pg_dump` — seção 2.4, ADR-001 |
@@ -531,7 +533,7 @@ Os pares de requisitos que se puxam em direções opostas e como a arquitetura o
 
 | Tradeoff | Quem perde o quê | Resolução |
 |---|---|---|
-| **RNF02 × RNF03** — auditar tudo × leitura rápida | Auditoria síncrona penaliza a leitura; assíncrona pode perder um registro se o processo morrer | Auditoria **híbrida**: leitura assíncrona, escrita e acesso negado síncronos; risco residual declarado e com plano de evolução (outbox). ADR-002 |
+| **RNF02 × RNF03** — auditar tudo × leitura rápida | Auditoria síncrona penaliza a leitura; assíncrona pode perder um registro se o processo morrer | Auditoria **híbrida**: leitura assíncrona, escrita e acesso negado síncronos, todos por evento (o módulo de negócio não conhece a Auditoria); risco residual declarado e com plano de evolução (outbox). A gravação síncrona na escrita acrescenta um `INSERT` à transação do atendimento; escrita é rara, então o custo é pequeno. ADR-002 |
 | **RNF01 × RNF06** — controle forte × recepção ágil | Perfis e confirmações em excesso travam o balcão | O perfil é resolvido **uma vez**, no login (claims do JWT); a checagem por requisição é em memória, sem consulta ao banco nem confirmação extra. A restrição forte fica onde o risco está (prontuário), não na agenda. ADR-004 |
 | **RNF05 × esforço** — modularidade × velocidade | Domínio puro com mapeadores dá mais classes | Aceito só nos agregados com regra; custo contido por mapeamento manual simples. ADR-003 |
 | **RNF04 × custo** — disponibilidade × simplicidade | Uma instância não tem failover | A meta de 99% em horário comercial é atingível com reinício rápido; réplicas custam mais do que o requisito exige. ADR-001 |
