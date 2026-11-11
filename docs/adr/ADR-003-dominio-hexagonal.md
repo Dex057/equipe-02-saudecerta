@@ -6,6 +6,8 @@
 
 **Decisão.** O domínio é composto de classes Java puras, com comportamento (`Consulta.cancelar()`, `Atendimento.complementar()`), sem anotações de Spring Data/JPA. O domínio declara **portas** (`ConsultaRepository`, `ProntuarioRepository`, `CadastroPort`, `ConsultaPort`); a camada `infra` as implementa com adaptadores JPA, com entidades JPA próprias e **mapeamento manual** entre elas.
 
+**Aplicação ao modelo do Prontuário.** `Atendimento` é raiz de agregado própria, ligada a `Prontuario` por `prontuarioId`, sem composição entre raízes. `Complemento` acrescenta informações por INSERT sem alterar o atendimento original. `SolicitacaoDeExame` é outro agregado, ligado por `atendimentoId`, cuja atualização é restrita ao status (SOLICITADO para REALIZADO ou CANCELADO). O domínio continua puro; o adaptador JPA e os mapeadores tratam a persistência, conforme ADR-006.
+
 **Alternativas consideradas.**
 
 - **A. Domínio puro + portas + adaptadores JPA** (escolhida).
