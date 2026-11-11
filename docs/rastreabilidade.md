@@ -12,7 +12,7 @@ Liga cada requisito à decisão que o sustenta, ao componente ou à tática que 
 | **RF06** Impedir conflito | ADR-005 | `ValidadorDeConflito.validarConflito()` + `UNIQUE (profissional_id, horario_ocupado)` | Teste unitário com dois agendamentos no mesmo horário; teste com duas threads (um `201`, um `409`) |
 | **RF07** Registrar atendimento | ADR-003, ADR-002 | `ProntuarioService`, `Atendimento` imutável; auditoria de escrita na mesma transação | Atendimento salvo; tentativa de alterar ou apagar não tem operação disponível (RN05) |
 | **RF08** Emitir prescrição | ADR-003 | `Prescricao` / `ItemDePrescricao` dentro do `Atendimento` | Prescrição sem atendimento é impossível (RN04); exige pelo menos um item |
-| **RF09** Solicitar exames | ADR-003 | `SolicitacaoDeExame` dentro do `Atendimento` | Exame sem atendimento é impossível (RN04); status inicial SOLICITADO |
+| **RF09** Solicitar exames | ADR-003, ADR-006 | `SolicitacaoDeExame`, agregado independente ligado ao `Atendimento` por `atendimentoId`; só o `status` pode mudar (`pro_solicitacao_exame`) | Exame sem atendimento é impossível (RN04); status inicial SOLICITADO; transições SOLICITADO → REALIZADO ou CANCELADO não alteram o atendimento |
 | **RF10** Consultar histórico | ADR-002 | `ProntuarioService.consultarHistorico` paginado; porta `ProntuarioRepository` | Ordem cronológica; p95 inferior a 2 segundos na primeira página |
 | **RF11** Autenticar e aplicar perfis | ADR-004 | `SegurancaConfig`, `AuthController`, filtro JWT, `@PreAuthorize` | Teste da matriz perfil × recurso (`arquitetura.md`, seção 3.3) |
 | **RF12** Auditar acesso ao prontuário | ADR-002 | `AuditoriaListener`, `AuditoriaService`, `RegistroAuditoria`, `AuditoriaController` | Acessar prontuário e verificar o registro, considerando a espera assíncrona |
@@ -44,7 +44,7 @@ Confere que nenhuma decisão arquitetural declarada nas ADRs fique sem requisito
 | ADR-002 Auditoria híbrida | RF12, RF10, RF07, RNF01, RNF02, RNF03 |
 | ADR-003 Hexagonal | RF02, RF07, RF08, RF09, RN01–RN07, RNF05 |
 | ADR-004 RBAC + titularidade + JWT | RF11, RF14, RF15, RN06, RNF01, RNF06, RNF07 |
-| ADR-005 Anti-conflito de horário | RF03, RF04, RF05, RF06, RN02, RNF06 |
-| ADR-006 Banco com propriedade por módulo | RF01, RF13, RN01, RN05, RNF03, RNF05 |
+| ADR-005 Anti-conflito de horário | RF03, RF04, RF05, RF06, RN02, RN07, RNF06 |
+| ADR-006 Banco com propriedade por módulo | RF01, RF09, RF13, RN01, RN05, RNF03, RNF05 |
 
 Os requisitos RF01 a RF15, as regras de negócio RN01–RN07 e os requisitos não funcionais RNF01–RNF07 possuem linhas próprias nesta matriz. As regras RN01–RN07 também têm seu local de aplicação e teste detalhados em `arquitetura.md`, seção 4.2.
