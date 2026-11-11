@@ -51,77 +51,66 @@ Abre o SaúdeCerta em unidades executáveis/implantáveis. São três: a aplica�
 
 ### 2.3 Nível 3 — Componentes da API
 
-O contêiner **API SaúdeCerta** é dividido em módulos de negócio (pacotes de primeiro nível). Cada módulo tem as quatro camadas internas `api / application / domain / infra`.
+O contêiner **API SaúdeCerta** é um monólito modular (ADR-001), com camadas `api / application / domain / infra`. Os diagramas C4 nível 3 abaixo mostram a estrutura de componentes e as dependências permitidas. **A API de Relatórios é uma exceção controlada**: em vez de chamar `CadastroApi` e `AgendaApi` para agregar dados, utiliza consultas SQL dedicadas e somente leitura, autorizadas pelo ADR-006 e verificadas por ArchUnit.
 
 #### 2.3.1 Visão geral dos módulos
 
-As setas cheias são dependências de código permitidas (um módulo só usa a interface pública `*Api` do outro); as tracejadas são eventos. Segurança é transversal (autenticação e autorização por perfil valem para todos os módulos), então as setas de autorização não foram desenhadas para não poluir o diagrama. Os eventos (`ProntuarioAcessado`, `AtendimentoRegistrado`, `AcessoNegado`) ficam em `shared.eventos`, de modo que **nenhum módulo de negócio depende de Auditoria**: Prontuário e Segurança só publicam eventos, e o `AuditoriaListener` os consome.
+As setas de dependência de código entre módulos passam pelas interfaces `*Api`; os eventos são publicados em `shared.eventos`. As checagens de autorização valem para todos os casos de uso e não foram repetidas nas conexões para manter o diagrama legível. Relatórios não acessa outros módulos por interfaces para gerar agregados: lê apenas as tabelas `age_consulta`, `cad_profissional`, `cad_especialidade` e `cad_profissional_especialidade`, por SQL dedicado (ADR-006).
 
-![C4 nível 1 — Contexto do SaúdeCerta](img/c4-1-contexto.png)
-*Fonte editável: [arquitetura.drawio](arquitetura.drawio), página 1.*
+![C4 nível 3 — Visão geral de componentes do SaúdeCerta](img/c4-3-componentes-visao-geral.png)
+
+*Fonte editável: [arquitetura.drawio](arquitetura.drawio), página 3.*
 
 | Componente (módulo) | Responsabilidade | Requisitos |
 |---|---|---|
-| Cadastro | Pacientes (CPF único), profissionais e especialidades | RF01, RF02, RN01 |
-| Agenda | Disponibilidade, geração de horários, marcação/remarcação/cancelamento, anti-conflito | RF03–RF06, RN02, RN07 |
-| Prontuário | Atendimento, prescrição, exames, histórico; prontuário somente-anexação | RF07–RF10, RN03–RN05 |
-| Relatórios | Consultas por período/profissional/especialidade com totais | RF13 |
-| Segurança | Autenticação, JWT, RBAC, titularidade (paciente só vê o próprio), hash BCrypt | RF11, RN06, RNF01, RNF07 |
-| Auditoria | Registro e consulta da trilha de acesso ao prontuário | RF12, RNF02 |
-| Shared | Eventos de domínio, tratamento de erros (`@ControllerAdvice`), configuração | transversal |
+| Cadastro | Pacientes (CPF único entre ativos), profissionais e especialidades | RF01, RF02, RN01 |
+| Agenda | Disponibilidade, grade, marcação, remarcação, cancelamento, anti-conflito | RF03–RF06, RN02, RN07 |
+| Prontuário | Atendimento imutável, histórico, prescrição e solicitação de exames | RF07–RF10, RN03–RN05 |
+| Relatórios | Consultas SQL dedicadas e somente leitura para cruzar agenda e cadastro | RF13 |
+| Segurança | JWT, autenticação, RBAC e titularidade nos casos de uso | RF11, RF14, RF15, RN06, RNF01, RNF07 |
+| Auditoria | Recebe eventos, registra e consulta trilha imutável | RF12, RNF02 |
+| Shared | Eventos, tratamento comum de exceções e configuração transversal | transversal |
 
 #### 2.3.2 Zoom: módulo Prontuário e fluxo de auditoria
 
-É o ponto mais sensível do sistema e onde a tensão entre RNF02 e RNF03 se resolve. Três caminhos de auditoria convivem (ADR-002), e os três chegam à Auditoria por evento, sem que Prontuário ou Segurança chamem o `AuditoriaService`: **leitura** (`ProntuarioAcessado`, listener assíncrono), **escrita** (`AtendimentoRegistrado`, listener síncrono que roda na mesma transação do atendimento; se a gravação falhar, a alteração clínica também falha) e **acesso negado** (`AcessoNegado`, listener síncrono; se a gravação falhar, o acesso continua negado e a falha vai para o log `AUDITORIA_FALHA`).
+O `ProntuarioController` recebe HTTP, mas **não decide autorização**: `@PreAuthorize` e `TitularidadePolicy` são aplicados no caso de uso (`ProntuarioService`), como exige o ADR-004. O `AccessDeniedHandler` e o `@ControllerAdvice` publicam `AcessoNegado` e respondem `403` sem corpo clínico.
 
-![C4 nível 2 — Contêineres do SaúdeCerta](img/c4-2-conteineres.png)
-*Fonte editável: [arquitetura.drawio](arquitetura.drawio), página 2.*
+A auditoria segue as três modalidades do ADR-002: (1) **leitura**, evento `ProntuarioAcessado` tratado de modo assíncrono, com fila limitada, três tentativas e fallback em `AUDITORIA_FALHA`; (2) **escrita**, evento `AtendimentoRegistrado` síncrono, na mesma transação do atendimento; e (3) **acesso negado**, evento `AcessoNegado` síncrono, preservando a negativa mesmo se a auditoria falhar. Nenhum módulo de negócio chama `AuditoriaService` diretamente.
+
+O modelo de domínio da #9 distingue `Atendimento` (registro clínico imutável) de `SolicitacaoDeExame` (agregado independente cujo status pode mudar), conforme ADR-003 e ADR-006.
+
+![C4 nível 3 — Prontuário e fluxo de auditoria](img/c4-4-componentes-prontuario.png)
+
+*Fonte editável: [arquitetura.drawio](arquitetura.drawio), página 4.*
 
 #### 2.3.3 Zoom: módulo Agenda e o anti-conflito de horário
 
-Concentra a dor original da clínica (dois pacientes no mesmo horário). A regra RN02 é protegida em duas linhas de defesa: validação no domínio e restrição única no banco (ADR-005).
+O `AgendaService` valida, na mesma transação, se o horário pertence à disponibilidade e à grade de slots (`ValidadorDeDisponibilidade`) e se está livre (`ValidadorDeConflito`). **A garantia final de concorrência** é a restrição `uk_consulta_profissional_horario_ocupado` em `age_consulta` sobre `(profissional_id, horario_ocupado)`, definida no ADR-005. O campo `horario_ocupado` fica `NULL` quando a consulta deixa de estar AGENDADA.
 
-```mermaid
-flowchart TB
-    spa["<b>Aplicação Web</b><br/>[Contêiner]"]
+O `ConsultaJpaAdapter` traduz especificamente a violação da restrição para `ConflitoDeHorarioException`, sem conhecer HTTP. O `TratadorDeErros` (`@ControllerAdvice`) mapeia essa exceção para `409 Conflict`. A persistência faz *flush* antes da resposta, permitindo que o erro seja convertido corretamente.
 
-    subgraph api["API SaúdeCerta — módulo agenda"]
-        agc["<b>AgendaController</b><br/>[api: @RestController, DTOs]<br/>Horários livres, marcar,<br/>remarcar/cancelar, disponibilidade"]
-        ags["<b>AgendaService</b><br/>[application: @Service, @Transactional]<br/>Casos de uso da agenda"]
-        con["<b>Consulta (agregado)</b><br/>[domain]<br/>Status AGENDADA/REALIZADA/CANCELADA<br/>Regras RN02 (estado), RN07"]
-        dsp["<b>Disponibilidade</b><br/>[domain]<br/>Gera horários de duração fixa"]
-        val["<b>ValidadorDeConflito</b><br/>[domain service]<br/>validarConflito(): regra RN02"]
-        cr["<b>ConsultaRepository</b><br/>[porta no domain]"]
-        cdp["<b>CadastroPort</b><br/>[porta no domain]"]
-        cja["<b>ConsultaJpaAdapter</b><br/>[infra: Spring Data JPA]<br/>Traduz violação de UNIQUE em 409"]
-        cda["<b>CadastroAdapter</b><br/>[infra]"]
-        api2["<b>AgendaApi</b><br/>[application: porta de entrada pública]<br/>Usada por Prontuário e Relatórios"]
-    end
+![C4 nível 3 — Agenda e prevenção de conflito de horário](img/c4-5-componentes-agenda.png)
 
-    cad["<b>Módulo Cadastro</b><br/>[CadastroApi]"]
-    db[("<b>Banco de dados</b><br/>UNIQUE (profissional_id, horario_ocupado)")]
+*Fonte editável: [arquitetura.drawio](arquitetura.drawio), página 5.*
 
-    spa -->|"REST"| agc
-    agc --> ags
-    ags --> con
-    ags --> dsp
-    ags --> val
-    ags --> cr
-    ags --> cdp
-    val --> cr
-    cja -.->|"implementa"| cr
-    cda -.->|"implementa"| cdp
-    cja -->|"JPA"| db
-    cda -->|"chama"| cad
-    api2 --> ags
+#### 2.3.4 Componentes citados na matriz de rastreabilidade
 
-    classDef container fill:#438dd5,stroke:#2e6295,color:#fff
-    classDef comp fill:#85bbf0,stroke:#5d8cc0,color:#000
-    classDef port fill:#d6e9fa,stroke:#5d8cc0,color:#000,stroke-dasharray:4 2
-    class spa,db,cad container
-    class agc,ags,con,dsp,val,cja,cda,api2 comp
-    class cr,cdp port
-```
+Além dos módulos e componentes destacados nos diagramas, a tabela explicita os nomes usados em [`rastreabilidade.md`](rastreabilidade.md) e evita que a matriz cite componentes sem definição:
+
+| Componente | Camada / módulo | Responsabilidade |
+|---|---|---|
+| `CadastroController` | `cadastro.api` | Endpoints HTTP de pacientes, profissionais e especialidades |
+| `CadastroService` | `cadastro.application` | Casos de uso de cadastro e validação de CPF ativo |
+| `PacienteRepository` | `cadastro.domain` (porta) | Consultar e persistir pacientes; implementada em `cadastro.infra` |
+| `AuthController` | `seguranca.api` | Login e emissão de JWT para usuários ativos |
+| `RelatoriosService` | `relatorios.application` | Agregar dados por meio de consultas dedicadas e somente leitura |
+| `AgendaController` / `AgendaService` | `agenda.api` / `agenda.application` | Operações HTTP e orquestração transacional da agenda |
+| `ConsultaRepository` / `ConsultaJpaAdapter` | `agenda.domain` / `agenda.infra` | Porta de consultas e adaptação de persistência com anti-conflito |
+| `ValidadorDeDisponibilidade` / `ValidadorDeConflito` | `agenda.domain` | Validar slots e conflito de horários |
+| `ProntuarioController` / `ProntuarioService` | `prontuario.api` / `prontuario.application` | Histórico, atendimento, autorização e publicação de eventos |
+| `ProntuarioRepository` / `ProntuarioJpaAdapter` | `prontuario.domain` / `prontuario.infra` | Consulta paginada e gravação por portas/adaptadores |
+| `TitularidadePolicy` / `AccessDeniedHandler` | `application` / `seguranca` | Verificar titularidade; capturar negativas e emitir evento de auditoria |
+| `AuditoriaListener` / `AuditoriaService` / `AuditoriaController` | `seguranca.auditoria` | Consumir eventos, persistir e consultar trilha de auditoria |
 
 ### 2.4 Implantação: tiers e disponibilidade
 
@@ -169,7 +158,7 @@ Cada módulo repete as mesmas camadas (arquitetura hexagonal sobre monólito mod
 1. `domain` não importa `jakarta.persistence`, `org.springframework.data` nem `org.springframework.web`.
 2. `api` não acessa `infra` nem `domain` diretamente (só `application`).
 3. Um módulo só usa de outro módulo os tipos `*Api` e seus DTOs `*Resumo`. Exceção documentada: `relatorios` lê tabelas de outros módulos apenas para consulta (ADR-006).
-4. Não há ciclos entre módulos. Direção permitida: `relatorios → agenda → cadastro` e `prontuario → agenda → cadastro`.
+4. Não há ciclos entre módulos. Dependências de código: `prontuario → agenda → cadastro` e `agenda → cadastro`, via interfaces públicas. `relatorios` acessa apenas as tabelas autorizadas por SQL de leitura dedicado, conforme a exceção do ADR-006.
 
 ### 3.2 Estrutura de pacotes
 
