@@ -17,7 +17,7 @@ Sistema web multicamadas para digitalizar o fluxo de atendimento de uma clínica
 Cada entrega acrescenta ao repositório e é marcada com uma tag.
 
 - [x] **E1** — Visão e Requisitos (tag [`E1`](../../tree/E1)): [`docs/visao.md`](docs/visao.md), [`docs/requisitos.md`](docs/requisitos.md)
-- [ ] **E2** — Projeto Arquitetural, **prazo 10/11/2026** (em andamento, ver [issues](../../issues?q=is%3Aissue+milestone%3AE2)): [`docs/arquitetura.md`](docs/arquitetura.md), [`docs/adr/`](docs/adr/README.md), [`docs/rastreabilidade.md`](docs/rastreabilidade.md)
+- [x] **E2** — Projeto Arquitetural (tag [`E2`](../../tree/E2)): [`docs/arquitetura.md`](docs/arquitetura.md), [`docs/adr/`](docs/adr/README.md), [`docs/rastreabilidade.md`](docs/rastreabilidade.md)
 - [ ] **E3** — Protótipo em Spring Boot (`src/`)
 - [ ] **Projeto Final** — Arquitetura baseada em serviços
 

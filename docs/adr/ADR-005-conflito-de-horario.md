@@ -45,4 +45,4 @@
 - Concorrência: duas remarcações para a mesma consulta são serializadas; cancelamento concorrente com nova marcação só torna o slot disponível após o commit, sem permitir duas consultas AGENDADA no mesmo slot.
 - Integração: cancelamento de AGENDADA libera o slot, cancelamento de REALIZADA devolve `422`, e consultas CANCELADA/REALIZADA não bloqueiam o slot.
 
-**Rastreia:** RF03, RF04, RF05, RF06, RN02, RNF06.
+**Rastreia:** RF03, RF04, RF05, RF06, RN02, RN07, RNF06.
