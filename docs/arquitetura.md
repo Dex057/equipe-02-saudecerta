@@ -510,6 +510,7 @@ classDiagram
         }
         class Atendimento {
             +Long id
+            +Long prontuarioId
             +Long consultaId
             +Long profissionalId
             +LocalDateTime dataHora
@@ -536,8 +537,11 @@ classDiagram
         }
         class SolicitacaoDeExame {
             +Long id
+            +Long atendimentoId
             +String tipoExame
             +StatusExame status
+            +marcarRealizado()
+            +cancelar()
         }
     }
 
@@ -564,12 +568,12 @@ classDiagram
     Consulta "N" ..> "1" Paciente : pacienteId
     Consulta "N" ..> "1" Profissional : profissionalId
     Prontuario "1" ..> "1" Paciente : pacienteId
-    Prontuario "1" *-- "N" Atendimento
+    Prontuario "1" ..> "N" Atendimento : prontuarioId
     Atendimento "0..1" ..> "1" Consulta : consultaId
     Atendimento "1" *-- "N" Complemento
     Atendimento "1" *-- "N" Prescricao
     Prescricao "1" *-- "1..N" ItemDePrescricao
-    Atendimento "1" *-- "N" SolicitacaoDeExame
+    SolicitacaoDeExame "N" ..> "1" Atendimento : atendimentoId
     Usuario "1" ..> "0..1" Profissional : vinculoId
     Usuario "1" ..> "0..1" Paciente : vinculoId
     RegistroAuditoria "N" ..> "1" Usuario : usuarioId
@@ -585,11 +589,12 @@ Legenda: linha cheia com losango = composição dentro do mesmo agregado; linha 
 | `Paciente` | — | RN01 (CPF único entre cadastros ativos) |
 | `Profissional` | lista de `Especialidade` (referências) | RF02 (pelo menos uma especialidade) |
 | `Consulta` | — | RN02 (um horário por profissional), RN07 (só cancela se AGENDADA) |
-| `Atendimento` | `Complemento`, `Prescricao`, `ItemDePrescricao`, `SolicitacaoDeExame` | RN04 (nada existe sem atendimento), RN05 (imutável após criado) |
+| `Atendimento` | `Complemento`, `Prescricao`, `ItemDePrescricao` | RN04 (prescricoes vinculadas), RN05 (registro clinico imutavel) |
+| `SolicitacaoDeExame` | — | RF09: agregado independente com `atendimentoId`; transicoes SOLICITADO para REALIZADO ou CANCELADO |
 | `Usuario` | — | RNF07 (só guarda o hash) |
 | `RegistroAuditoria` | — | imutável; só INSERT |
 
-`Prontuario` é a identidade do histórico de um paciente (1:1 com `Paciente`). Para não carregar toda a história em memória, o repositório devolve os atendimentos **paginados** (`historico(pacienteId, page)`); por isso `Atendimento` é raiz do próprio agregado.
+`Prontuario` é a identidade do histórico de um paciente (1:1 com `Paciente`). O campo `prontuarioId` vincula cada `Atendimento` ao histórico, sem composição entre as duas raízes. Para não carregar toda a história em memória, o repositório devolve os atendimentos **paginados** (`historico(pacienteId, page)`). `Atendimento` é raiz do próprio agregado. `SolicitacaoDeExame` também é um agregado independente: possui `atendimentoId`, nasce vinculada a um atendimento existente e pode atualizar somente seu status, sem modificar o registro clínico original.
 
 ### 4.2 Onde cada regra de negócio é aplicada
 
@@ -598,10 +603,11 @@ Legenda: linha cheia com losango = composição dentro do mesmo agregado; linha 
 | RN01 | `Cpf` + `CadastroService` consulta o repositório; índice único no banco para CPF ativo | cadastrar o mesmo CPF duas vezes → erro |
 | RN02 | `ValidadorDeDisponibilidade` + `ValidadorDeConflito` (domínio) e restrição `UNIQUE (profissional_id, horario_ocupado)` (ADR-005) | **testes obrigatórios do E3:** slot fora da disponibilidade/grade não grava; dois POSTs concorrentes no mesmo slot resultam em uma criação e um `409`; PATCH de remarcação concorrente não perde o slot anterior |
 | RN03 | `Consulta.marcarRealizada(hoje)` recebe a data do `Clock` injetado | consulta futura → erro 422; `Clock` fixo no teste |
-| RN04 | `Prescricao` e `SolicitacaoDeExame` só são criadas por métodos do `Atendimento`; FK `NOT NULL` | impossível construir sem atendimento |
-| RN05 | `Atendimento` sem setters; `ProntuarioRepository` não tem `update` nem `delete`; só `adicionarComplemento` | **teste obrigatório do E3**: não existe operação de alterar/apagar; tabela sem `DELETE` para o usuário da aplicação |
+| RN04 | `Prescricao` nasce vinculada a `Atendimento`; `SolicitacaoDeExame` é criada por caso de uso que valida `atendimentoId` existente, com FK interna `NOT NULL` | rejeitar prescricao ou solicitacao sem atendimento |
+| RN05 | `Atendimento` sem setters; `pro_atendimento` aceita apenas INSERT/SELECT; complementos sao novos registros, sem alterar o original. O status de `SolicitacaoDeExame` muda em tabela separada (ADR-006) | **teste obrigatório do E3:** atendimento nao pode ser alterado/apagado; atualizacao de status do exame nao muda o atendimento |
 | RN06 | `@PreAuthorize` nega RECEPCAO/ADMIN no prontuário; `TitularidadePolicy` compara o paciente do token com o do recurso | teste de matriz perfil × recurso (seção 5, RNF01) |
 | RN07 | `Consulta.cancelar()` lança exceção se status ≠ AGENDADA | cancelar consulta REALIZADA → 422 |
+| RF09 (status do exame) | `SolicitacaoDeExame` altera somente `status`: SOLICITADO → REALIZADO ou CANCELADO; estados finais nao retornam a SOLICITADO | transicao valida atualiza apenas status; transicao invalida retorna 422 |
 
 ---
 
