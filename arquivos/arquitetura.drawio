@@ -1,0 +1,116 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" modified="2026-11-10T18:00:00.000Z" agent="ChatGPT" version="24.7.17" type="device">
+  <diagram id="contexto" name="1 - Contexto">
+    <mxGraphModel dx="1500" dy="900" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="1700" pageHeight="1050" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title1" value="[Contexto do sistema] SaúdeCerta" style="html=1;whiteSpace=wrap;align=center;verticalAlign=middle;spacing=12;fontFamily=Arial;fontSize=17;rounded=0;strokeColor=none;fillColor=#ffffff;strokeColor=#ffffff;fontColor=#253858;strokeWidth=2;fontSize=28;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="100" y="20" width="1480" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="rec" value="&lt;b&gt;Recepcionista&lt;/b&gt;&lt;br&gt;[Pessoa]&lt;br&gt;Cadastra pacientes; marca, remarca e cancela consultas" style="html=1;whiteSpace=wrap;align=center;verticalAlign=middle;spacing=12;fontFamily=Arial;fontSize=17;rounded=1;arcSize=9;fillColor=#08427b;strokeColor=#2e6295;fontColor=#ffffff;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="100" y="130" width="300" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="prof" value="&lt;b&gt;Profissional de saúde&lt;/b&gt;&lt;br&gt;[Pessoa]&lt;br&gt;Consulta histórico, registra atendimento, prescreve e solicita exames" style="html=1;whiteSpace=wrap;align=center;verticalAlign=middle;spacing=12;fontFamily=Arial;fontSize=17;rounded=1;arcSize=9;fillColor=#08427b;strokeColor=#2e6295;fontColor=#ffffff;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="460" y="130" width="300" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="pac" value="&lt;b&gt;Paciente&lt;/b&gt;&lt;br&gt;[Pessoa]&lt;br&gt;Consulta os próprios agendamentos e dados" style="html=1;whiteSpace=wrap;align=center;verticalAlign=middle;spacing=12;fontFamily=Arial;fontSize=17;rounded=1;arcSize=9;fillColor=#08427b;strokeColor=#2e6295;fontColor=#ffffff;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="820" y="130" width="300" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="adm" value="&lt;b&gt;Administrador&lt;/b&gt;&lt;br&gt;[Pessoa]&lt;br&gt;Gerencia usuários, perfis e especialidades; acompanha relatórios e auditoria" style="html=1;whiteSpace=wrap;align=center;verticalAlign=middle;spacing=12;fontFamily=Arial;fontSize=17;rounded=1;arcSize=9;fillColor=#08427b;strokeColor=#2e6295;fontColor=#ffffff;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="1180" y="130" width="300" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="sys" value="&lt;b&gt;SaúdeCerta&lt;/b&gt;&lt;br&gt;[Sistema de software]&lt;br&gt;Agenda, atendimento, prontuário eletrônico, prescrição/exames, controle de acesso e auditoria" style="html=1;whiteSpace=wrap;align=center;verticalAlign=middle;spacing=12;fontFamily=Arial;fontSize=17;rounded=1;arcSize=9;fillColor=#1168bd;strokeColor=#2e6295;fontColor=#ffffff;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="600" y="480" width="380" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="p0" value="Gerencia consultas e cadastros [HTTPS]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#475569;fontColor=#1f2937;fontSize=14;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="rec" target="sys">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="180" y="350" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1" value="Atende e registra no prontuário [HTTPS]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#475569;fontColor=#1f2937;fontSize=14;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="prof" target="sys">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="530" y="362" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2" value="Consulta seus dados [HTTPS]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#475569;fontColor=#1f2937;fontSize=14;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="pac" target="sys">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="880" y="374" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p3" value="Administra e audita [HTTPS]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#475569;fontColor=#1f2937;fontSize=14;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="adm" target="sys">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1230" y="386" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="fat" value="&lt;b&gt;Faturamento e convênios&lt;/b&gt;&lt;br&gt;[Sistema externo — futuro]&lt;br&gt;Integração prevista, fora do escopo" style="html=1;whiteSpace=wrap;align=center;verticalAlign=middle;spacing=12;fontFamily=Arial;fontSize=17;rounded=1;dashed=1;dashPattern=6 4;fillColor=#999999;strokeColor=#2e6295;fontColor=#ffffff;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="100" y="790" width="350" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="efat" value="integração prevista, fora do escopo" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#475569;fontColor=#1f2937;fontSize=14;labelBackgroundColor=#ffffff;dashed=1;dashPattern=7 5;" edge="1" parent="1" source="sys" target="fat">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lab" value="&lt;b&gt;Laboratórios externos&lt;/b&gt;&lt;br&gt;[Sistema externo — futuro]&lt;br&gt;Integração prevista, fora do escopo" style="html=1;whiteSpace=wrap;align=center;verticalAlign=middle;spacing=12;fontFamily=Arial;fontSize=17;rounded=1;dashed=1;dashPattern=6 4;fillColor=#999999;strokeColor=#2e6295;fontColor=#ffffff;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="620" y="790" width="350" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="elab" value="integração prevista, fora do escopo" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#475569;fontColor=#1f2937;fontSize=14;labelBackgroundColor=#ffffff;dashed=1;dashPattern=7 5;" edge="1" parent="1" source="sys" target="lab">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="icp" value="&lt;b&gt;Assinatura digital ICP-Brasil&lt;/b&gt;&lt;br&gt;[Sistema externo — futuro]&lt;br&gt;Integração prevista, fora do escopo" style="html=1;whiteSpace=wrap;align=center;verticalAlign=middle;spacing=12;fontFamily=Arial;fontSize=17;rounded=1;dashed=1;dashPattern=6 4;fillColor=#999999;strokeColor=#2e6295;fontColor=#ffffff;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="1140" y="790" width="350" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="eicp" value="integração prevista, fora do escopo" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#475569;fontColor=#1f2937;fontSize=14;labelBackgroundColor=#ffffff;dashed=1;dashPattern=7 5;" edge="1" parent="1" source="sys" target="icp">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="legend1" value="&lt;b&gt;Legenda&lt;/b&gt;: Azul escuro = Pessoa | Azul = Sistema | Cinza tracejado = Sistema externo | Seta tracejada = integração futura" style="html=1;whiteSpace=wrap;align=center;verticalAlign=middle;spacing=12;fontFamily=Arial;fontSize=17;rounded=0;strokeColor=none;fillColor=#ffffff;strokeColor=#ffffff;fontColor=#253858;strokeWidth=2;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="120" y="960" width="1360" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="conteineres" name="2 - Conteineres">
+    <mxGraphModel dx="1500" dy="900" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="1700" pageHeight="1050" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title2" value="[Contêineres] SaúdeCerta" style="html=1;whiteSpace=wrap;align=center;verticalAlign=middle;spacing=12;fontFamily=Arial;fontSize=17;rounded=0;strokeColor=none;fillColor=#ffffff;strokeColor=#ffffff;fontColor=#253858;strokeWidth=2;fontSize=28;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="110" y="20" width="1480" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="users" value="&lt;b&gt;Usuários&lt;/b&gt;&lt;br&gt;[Pessoas]&lt;br&gt;Recepcionista, Profissional, Paciente, Administrador" style="html=1;whiteSpace=wrap;align=center;verticalAlign=middle;spacing=12;fontFamily=Arial;fontSize=17;rounded=1;arcSize=9;fillColor=#08427b;strokeColor=#2e6295;fontColor=#ffffff;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="100" y="430" width="270" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="bound" value="&lt;b&gt;SaúdeCerta [Sistema de software]&lt;/b&gt;" style="html=1;whiteSpace=wrap;align=center;verticalAlign=middle;spacing=12;fontFamily=Arial;fontSize=17;rounded=0;dashed=1;dashPattern=8 5;fillColor=#ffffff;strokeColor=#718096;fontColor=#253858;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="440" y="140" width="1140" height="690" as="geometry" />
+        </mxCell>
+        <mxCell id="web" value="&lt;b&gt;Aplicação Web&lt;/b&gt;&lt;br&gt;[Contêiner: SPA no navegador]&lt;br&gt;Telas de agenda, cadastro, prontuário e administração" style="html=1;whiteSpace=wrap;align=center;verticalAlign=middle;spacing=12;fontFamily=Arial;fontSize=17;rounded=1;arcSize=9;fillColor=#438dd5;strokeColor=#2e6295;fontColor=#ffffff;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="520" y="360" width="300" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="api" value="&lt;b&gt;API SaúdeCerta&lt;/b&gt;&lt;br&gt;[Contêiner: Java 17 + Spring Boot 3]&lt;br&gt;Monólito modular: regras de negócio, autenticação, RBAC e auditoria" style="html=1;whiteSpace=wrap;align=center;verticalAlign=middle;spacing=12;fontFamily=Arial;fontSize=17;rounded=1;arcSize=9;fillColor=#438dd5;strokeColor=#2e6295;fontColor=#ffffff;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="910" y="360" width="300" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="db" value="&lt;b&gt;Banco de dados&lt;/b&gt;&lt;br&gt;[Contêiner: PostgreSQL; H2 em dev/teste]&lt;br&gt;Cadastros, agenda, prontuário, usuários e trilha de auditoria" style="html=1;whiteSpace=wrap;align=center;verticalAlign=middle;spacing=12;fontFamily=Arial;fontSize=17;shape=cylinder3;boundedLbl=1;fillColor=#438dd5;strokeColor=#2e6295;fontColor=#ffffff;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="360" width="280" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="u-web" value="Usam [HTTPS]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#475569;fontColor=#1f2937;fontSize=14;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="users" target="web">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="web-api" value="Chama [JSON/REST sobre HTTPS, token JWT]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#475569;fontColor=#1f2937;fontSize=14;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="web" target="api">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="api-db" value="Lê e grava [JDBC / Spring Data JPA]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#475569;fontColor=#1f2937;fontSize=14;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="api" target="db">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="legend2" value="&lt;b&gt;Legenda&lt;/b&gt;: Azul escuro = Pessoas | Azul claro = Contêiner | Fronteira tracejada = sistema SaúdeCerta | Setas = comunicação com tecnologia indicada" style="html=1;whiteSpace=wrap;align=center;verticalAlign=middle;spacing=12;fontFamily=Arial;fontSize=17;rounded=0;strokeColor=none;fillColor=#ffffff;strokeColor=#ffffff;fontColor=#253858;strokeWidth=2;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="130" y="920" width="1410" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
