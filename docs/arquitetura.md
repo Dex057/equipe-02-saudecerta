@@ -486,7 +486,7 @@ Legenda: linha cheia com losango = composição dentro do mesmo agregado; linha 
 | RN05 | `Atendimento` sem setters; `pro_atendimento` aceita apenas INSERT/SELECT; complementos são novos registros, sem alterar o original. O status de `SolicitacaoDeExame` muda em tabela separada (ADR-006) | **teste obrigatório do E3:** atendimento não pode ser alterado/apagado; atualização de status do exame não muda o atendimento |
 | RN06 | `@PreAuthorize` nega RECEPCAO/ADMIN no prontuário; `TitularidadePolicy` compara o paciente do token com o do recurso | teste de matriz perfil × recurso (seção 5, RNF01) |
 | RN07 | `Consulta.cancelar()` lança exceção se status ≠ AGENDADA | cancelar consulta REALIZADA → 422 |
-| RF09 (status do exame) | `SolicitacaoDeExame` altera somente `status`: SOLICITADO → REALIZADO ou CANCELADO; estados finais não retornam a SOLICITADO | transição válida atualiza apenas status; transição inválida retorna 422 |
+| RF09 (status do exame) | `SolicitacaoDeExame` altera somente `status`: SOLICITADO → REALIZADO ou CANCELADO; estados finais não retornam a SOLICITADO. O caso de uso publica `StatusExameAlterado` em `shared.eventos`, com usuário, status anterior, novo status e horário; o `AuditoriaListener` registra o evento de forma síncrona, na mesma transação (ADR-002, RF12). | **Teste obrigatório no E3:** transição válida atualiza o status e gera exatamente um registro de auditoria; transição inválida retorna 422; falha na auditoria reverte a atualização do status. |
 
 ---
 
