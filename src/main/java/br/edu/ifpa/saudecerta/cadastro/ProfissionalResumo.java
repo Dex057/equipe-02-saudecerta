@@ -1,4 +1,6 @@
 package br.edu.ifpa.saudecerta.cadastro;
 
-public record ProfissionalResumo(Long id, String nome, Long especialidadeId, boolean ativo) {
+import java.util.List;
+
+public record ProfissionalResumo(Long id, String nome, List<Long> especialidadeIds, boolean ativo) {
 }
