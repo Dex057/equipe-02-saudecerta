@@ -37,4 +37,4 @@ Se a persistência da auditoria falhar, a transação inteira será revertida, i
 (−) Fere o "mínimo de código"; só se paga porque RNF05 e o PF exigem a fronteira.
 **Quando reavaliar:** se algum módulo for só CRUD sem regra (hoje, `Especialidade`), aceitar entidade JPA direta como exceção documentada.
 
-**Rastreia:** RF02, RF07, RF08, RF09, RN01–RN07, RNF05.
+**Rastreia:** RF02, RF07, RF08, RF09, RF12, RN01–RN07, RNF05.

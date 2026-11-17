@@ -98,7 +98,7 @@ O contêiner **API SaúdeCerta** é dividido em módulos de negócio (pacotes de
 
 #### 2.3.1 Visão geral dos módulos
 
-As setas cheias são dependências de código permitidas (um módulo só usa a interface pública `*Api` do outro); as tracejadas são eventos. Segurança é transversal (autenticação e autorização por perfil valem para todos os módulos), então as setas de autorização não foram desenhadas para não poluir o diagrama. Os eventos (`ProntuarioAcessado`, `AtendimentoRegistrado`, `AcessoNegado`) ficam em `shared.eventos`, de modo que **nenhum módulo de negócio depende de Auditoria**: Prontuário e Segurança só publicam eventos, e o `AuditoriaListener` os consome.
+As setas cheias são dependências de código permitidas (um módulo só usa a interface pública `*Api` do outro); as tracejadas são eventos. Segurança é transversal (autenticação e autorização por perfil valem para todos os módulos), então as setas de autorização não foram desenhadas para não poluir o diagrama. Os eventos (`ProntuarioAcessado`, `AtendimentoRegistrado`, `StatusExameAlterado`, `AcessoNegado`) ficam em `shared.eventos`, de modo que **nenhum módulo de negócio depende de Auditoria**: Prontuário e Segurança só publicam eventos, e o `AuditoriaListener` os consome.
 
 ```mermaid
 flowchart LR
@@ -130,7 +130,7 @@ flowchart LR
     rel -->|"AgendaApi (leitura)"| age
 
     pro -.->|"evento ProntuarioAcessado<br/>(assíncrono)"| shr
-    pro -.->|"evento AtendimentoRegistrado<br/>(síncrono)"| shr
+    pro -.->|"eventos AtendimentoRegistrado / StatusExameAlterado<br/>(síncronos)"| shr
     seg -.->|"evento AcessoNegado<br/>(síncrono)"| shr
     shr -.->|"entrega ao listener"| aud
 
@@ -159,7 +159,7 @@ flowchart LR
 
 #### 2.3.2 Zoom: módulo Prontuário e fluxo de auditoria
 
-É o ponto mais sensível do sistema e onde a tensão entre RNF02 e RNF03 se resolve. Três caminhos de auditoria convivem (ADR-002), e os três chegam à Auditoria por evento, sem que Prontuário ou Segurança chamem o `AuditoriaService`: **leitura** (`ProntuarioAcessado`, listener assíncrono), **escrita** (`AtendimentoRegistrado`, listener síncrono que roda na mesma transação do atendimento; se a gravação falhar, a alteração clínica também falha) e **acesso negado** (`AcessoNegado`, listener síncrono; se a gravação falhar, o acesso continua negado e a falha vai para o log `AUDITORIA_FALHA`).
+É o ponto mais sensível do sistema e onde a tensão entre RNF02 e RNF03 se resolve. Três caminhos de auditoria convivem (ADR-002), e os três chegam à Auditoria por evento, sem que Prontuário ou Segurança chamem o `AuditoriaService`: **leitura** (`ProntuarioAcessado`, listener assíncrono), **escrita** (`AtendimentoRegistrado` e `StatusExameAlterado`, listeners síncronos na mesma transação da alteração clínica; se a gravação da auditoria falhar, a alteração clínica também falha) e **acesso negado** (`AcessoNegado`, listener síncrono; se a gravação falhar, o acesso continua negado e a falha vai para o log `AUDITORIA_FALHA`).
 
 ```mermaid
 flowchart TB
@@ -175,7 +175,7 @@ flowchart TB
         cp["<b>ConsultaPort</b><br/>[porta no domain]"]
         pja["<b>ProntuarioJpaAdapter</b><br/>[infra: Spring Data JPA]"]
         aa["<b>AgendaAdapter</b><br/>[infra]"]
-        ev["<b>ProntuarioAcessado / AtendimentoRegistrado / AcessoNegado</b><br/>[shared.eventos]<br/>Eventos de domínio"]
+        ev["<b>ProntuarioAcessado / AtendimentoRegistrado / StatusExameAlterado / AcessoNegado</b><br/>[shared.eventos]<br/>Eventos de domínio"]
         al["<b>AuditoriaListener</b><br/>[seguranca.auditoria: @EventListener]<br/>Leitura: @Async, fila limitada, 3 tentativas,<br/>fallback em log estruturado<br/>Escrita e negado: síncrono"]
         asv["<b>AuditoriaService</b><br/>[seguranca.auditoria]<br/>Grava RegistroAuditoria"]
         ac["<b>AuditoriaController</b><br/>[seguranca.auditoria: api]<br/>Consulta da trilha (ADMIN)"]
@@ -197,7 +197,7 @@ flowchart TB
     aa -->|"chama"| agenda
 
     ps -->|"1. leitura: publica ProntuarioAcessado"| ev
-    ps -->|"2. escrita: publica AtendimentoRegistrado"| ev
+    ps -->|"2. escrita: AtendimentoRegistrado / StatusExameAlterado"| ev
     
     ev -.->|"1. assíncrono"| al
     ev -.->|"2 e 3. síncrono<br/>(2 na mesma transação)"| al
@@ -322,7 +322,7 @@ br.edu.ifpa.saudecerta
 ├── relatorios    (api, application, infra)           consultas de leitura
 ├── seguranca     (api, application, domain, infra)   Usuario, perfis, JWT, TitularidadePolicy
 │   └── auditoria (api, application, domain, infra)   RegistroAuditoria, AuditoriaListener
-└── shared        (eventos, excecoes, config)         ProntuarioAcessado, AtendimentoRegistrado, AcessoNegado, @ControllerAdvice
+└── shared        (eventos, excecoes, config)         ProntuarioAcessado, AtendimentoRegistrado, StatusExameAlterado, AcessoNegado, @ControllerAdvice
 ```
 
 ### 3.3 Controle de acesso por perfil (RBAC)
