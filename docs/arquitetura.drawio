@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <mxfile host="app.diagrams.net" modified="2026-11-10T18:00:00.000Z" agent="ChatGPT" version="24.7.17" type="device">
   <diagram id="contexto" name="1 - Contexto">
     <mxGraphModel dx="1500" dy="900" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="1700" pageHeight="1050" math="0" shadow="0">
@@ -109,6 +109,361 @@
         </mxCell>
         <mxCell id="legend2" value="&lt;b&gt;Legenda&lt;/b&gt;: Azul escuro = Pessoas | Azul claro = Contêiner | Fronteira tracejada = sistema SaúdeCerta | Setas = comunicação com tecnologia indicada" style="html=1;whiteSpace=wrap;align=center;verticalAlign=middle;spacing=12;fontFamily=Arial;fontSize=17;rounded=0;strokeColor=none;fillColor=#ffffff;strokeColor=#ffffff;fontColor=#253858;strokeWidth=2;fontSize=14;" vertex="1" parent="1">
           <mxGeometry x="130" y="920" width="1410" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="c3_page" name="3 - Componentes: Visão geral">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="2320" pageHeight="1360" math="0" shadow="0" background="#F5F8FD">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="c3_title" value="C4 · NÍVEL 3 / VISÃO GERAL" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=37;fontStyle=1;fontColor=#163B6D;" vertex="1" parent="1">
+          <mxGeometry x="70" y="46" width="2140" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="c3_subtitle" value="Decomposição do contêiner API SaúdeCerta · módulos, interfaces públicas, eventos e persistência" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=21;fontColor=#506176;" vertex="1" parent="1">
+          <mxGeometry x="70" y="115" width="2200" height="38" as="geometry" />
+        </mxCell>
+        <mxCell id="c3_note0" value="API SaúdeCerta · Monólito modular (Java 17 / Spring Boot 3)" style="html=1;whiteSpace=wrap;rounded=1;arcSize=7;dashed=1;dashPattern=10 7;fillColor=#F8FBFF;strokeColor=#8DA6C1;strokeWidth=3;align=left;verticalAlign=top;spacingLeft=25;spacingTop=10;fontFamily=Arial;fontSize=22;fontStyle=1;fontColor=#163B6D;" vertex="1" parent="1">
+          <mxGeometry x="330" y="190" width="1590" height="1000" as="geometry" />
+        </mxCell>
+        <mxCell id="c3_note1" value="Outros módulos persistem via adaptadores JPA.&lt;br&gt;Relatórios é exceção controlada pelo ADR-006." style="html=1;whiteSpace=wrap;rounded=1;arcSize=14;fillColor=#EDF3FA;strokeColor=#C9D6E6;strokeWidth=2;align=left;spacingLeft=16;fontFamily=Arial;fontSize=19;fontColor=#506176;" vertex="1" parent="1">
+          <mxGeometry x="840" y="970" width="930" height="94" as="geometry" />
+        </mxCell>
+        <mxCell id="c3_note2" value="Legenda  Azul = módulo  ·  Rosa = eventos  ·  Roxo = banco  ·  Seta tracejada = evento  ·  SQL dedicado = leitura sem *Api" style="html=1;whiteSpace=wrap;rounded=1;arcSize=10;fillColor=#E8EFF8;strokeColor=none;align=left;spacingLeft=15;fontFamily=Arial;fontSize=18;fontColor=#506176;" vertex="1" parent="1">
+          <mxGeometry x="70" y="1265" width="2100" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="c3_web" value="&lt;b&gt;Aplicação Web&lt;/b&gt;&lt;br&gt;[Contêiner externo]&lt;br&gt;Requisições REST /&lt;br&gt;HTTPS" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#123F6F;strokeColor=#0B2D50;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="48" y="455" width="240" height="145" as="geometry" />
+        </mxCell>
+        <mxCell id="c3_cad" value="&lt;b&gt;Cadastro&lt;/b&gt;&lt;br&gt;[Módulo] · cadastro&lt;br&gt;Pacientes, profissionais,&lt;br&gt;especialidades" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#DCEEFF;strokeColor=#3777B7;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="370" y="290" width="330" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="c3_age" value="&lt;b&gt;Agenda&lt;/b&gt;&lt;br&gt;[Módulo] · agenda&lt;br&gt;Disponibilidade, marcação e&lt;br&gt;anti-conflito" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#DCEEFF;strokeColor=#3777B7;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="815" y="290" width="330" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="c3_pro" value="&lt;b&gt;Prontuário&lt;/b&gt;&lt;br&gt;[Módulo] · prontuario&lt;br&gt;Histórico, atendimento, prescrição e&lt;br&gt;exames" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#DCEEFF;strokeColor=#3777B7;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="290" width="345" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="c3_seg" value="&lt;b&gt;Segurança&lt;/b&gt;&lt;br&gt;[Módulo] · seguranca&lt;br&gt;JWT, RBAC, TitularidadePolicy" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#DCEEFF;strokeColor=#3777B7;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="370" y="720" width="330" height="145" as="geometry" />
+        </mxCell>
+        <mxCell id="c3_shr" value="&lt;b&gt;Shared / eventos&lt;/b&gt;&lt;br&gt;[Componente transversal]&lt;br&gt;ProntuarioAcessado,&lt;br&gt;AtendimentoRegistrado,&lt;br&gt;AcessoNegado" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#FCE4F0;strokeColor=#B95186;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="815" y="720" width="330" height="165" as="geometry" />
+        </mxCell>
+        <mxCell id="c3_aud" value="&lt;b&gt;Auditoria&lt;/b&gt;&lt;br&gt;[Componente] · seguranca.auditoria&lt;br&gt;AuditoriaListener, AuditoriaService" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#DCEEFF;strokeColor=#3777B7;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="720" width="345" height="145" as="geometry" />
+        </mxCell>
+        <mxCell id="c3_rel" value="&lt;b&gt;Relatórios&lt;/b&gt;&lt;br&gt;[Módulo] · relatorios&lt;br&gt;RelatoriosService: SQL dedicado,&lt;br&gt;só leitura" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#DCEEFF;strokeColor=#3777B7;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="370" y="1035" width="330" height="142" as="geometry" />
+        </mxCell>
+        <mxCell id="c3_db" value="&lt;b&gt;Banco de dados&lt;/b&gt;&lt;br&gt;[Contêiner externo] ·&lt;br&gt;PostgreSQL / H2&lt;br&gt;cad_ · age_ · pro_ · seg_ ·&lt;br&gt;aud_" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#DCD9F7;strokeColor=#7665BA;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="1975" y="900" width="290" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="c3_webcad" value="REST" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c3_web" target="c3_cad">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="330" y="512" />
+              <mxPoint x="330" y="365" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c3_webseg" value="JWT" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c3_web" target="c3_seg">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="320" y="560" />
+              <mxPoint x="320" y="790" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c3_agecad" value="CadastroApi" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c3_age" target="c3_cad">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c3_proage" value="AgendaApi" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c3_pro" target="c3_age">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c3_proevt" value="publica eventos" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#B95186;fontColor=#B95186;fontSize=18;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=8 6;" edge="1" parent="1" source="c3_pro" target="c3_shr">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1430" y="590" />
+              <mxPoint x="995" y="590" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c3_segevt" value="AcessoNegado" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#B95186;fontColor=#B95186;fontSize=18;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=8 6;" edge="1" parent="1" source="c3_seg" target="c3_shr">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c3_shraud" value="listener" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#B95186;fontColor=#B95186;fontSize=18;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=8 6;" edge="1" parent="1" source="c3_shr" target="c3_aud">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c3_reldb" value="SELECT dedicado (ADR-006)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c3_rel" target="c3_db">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1830" y="1110" />
+              <mxPoint x="1830" y="980" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="c4_page" name="4 - Componentes: Prontuário">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="2320" pageHeight="1360" math="0" shadow="0" background="#F5F8FD">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="c4_title" value="C4 · NÍVEL 3 / PRONTUÁRIO + AUDITORIA" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=37;fontStyle=1;fontColor=#163B6D;" vertex="1" parent="1">
+          <mxGeometry x="70" y="46" width="2140" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_subtitle" value="Autorização no caso de uso · registros clínicos imutáveis · três modalidades de auditoria" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=21;fontColor=#506176;" vertex="1" parent="1">
+          <mxGeometry x="70" y="115" width="2200" height="38" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_note0" value="API SaúdeCerta · Prontuário, Segurança, Shared e Auditoria" style="html=1;whiteSpace=wrap;rounded=1;arcSize=7;dashed=1;dashPattern=10 7;fillColor=#F8FBFF;strokeColor=#8DA6C1;strokeWidth=3;align=left;verticalAlign=top;spacingLeft=25;spacingTop=10;fontFamily=Arial;fontSize=22;fontStyle=1;fontColor=#163B6D;" vertex="1" parent="1">
+          <mxGeometry x="305" y="190" width="1770" height="1060" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_note1" value="Leitura: assíncrona / fila + retry    ·    Escrita: síncrona na mesma transação    ·    Acesso negado: sempre 403; falha → AUDITORIA_FALHA" style="html=1;whiteSpace=wrap;rounded=1;arcSize=10;fillColor=#E8EFF8;strokeColor=none;align=left;spacingLeft=15;fontFamily=Arial;fontSize=18;fontColor=#506176;" vertex="1" parent="1">
+          <mxGeometry x="65" y="1275" width="2160" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_web" value="&lt;b&gt;Aplicação Web&lt;/b&gt;&lt;br&gt;[Contêiner externo]&lt;br&gt;REST / HTTPS" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#123F6F;strokeColor=#0B2D50;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="45" y="305" width="225" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_pc" value="&lt;b&gt;ProntuarioController&lt;/b&gt;&lt;br&gt;[api] · DTOs / HTTP&lt;br&gt;Entrada para histórico,&lt;br&gt;atendimento e exames" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#DCEEFF;strokeColor=#3777B7;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="335" y="292" width="305" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_ps" value="&lt;b&gt;ProntuarioService&lt;/b&gt;&lt;br&gt;[application] · @Transactional&lt;br&gt;@PreAuthorize + eventos" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#DCEEFF;strokeColor=#3777B7;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="710" y="292" width="305" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_dom" value="&lt;b&gt;Atendimento&lt;/b&gt;&lt;br&gt;[domain] · agregado imutável&lt;br&gt;Prescrição + Complemento&lt;br&gt;(append-only)" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#D1F4EA;strokeColor=#168673;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="1085" y="292" width="310" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_repo" value="&lt;b&gt;ProntuarioRepository&lt;/b&gt;&lt;br&gt;[domain] · porta&lt;br&gt;Histórico paginado /&lt;br&gt;persistência" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#FFF0CD;strokeColor=#BC8630;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="1470" y="292" width="300" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_jpa" value="&lt;b&gt;ProntuarioJpaAdapter&lt;/b&gt;&lt;br&gt;[infra] · Spring Data JPA&lt;br&gt;Implementa porta" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#E6E9F1;strokeColor=#71809C;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="1845" y="292" width="300" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_exame" value="&lt;b&gt;SolicitacaoDeExame&lt;/b&gt;&lt;br&gt;[domain] · agregado&lt;br&gt;independente&lt;br&gt;atendimentoId; só status muda" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#D1F4EA;strokeColor=#168673;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="1090" y="530" width="310" height="158" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_policy" value="&lt;b&gt;TitularidadePolicy&lt;/b&gt;&lt;br&gt;[application / segurança]&lt;br&gt;Perfil + paciente do token" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#FFF0CD;strokeColor=#BC8630;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="710" y="530" width="305" height="158" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_handler" value="&lt;b&gt;AccessDeniedHandler&lt;/b&gt;&lt;br&gt;[segurança / shared]&lt;br&gt;+ @ControllerAdvice → 403" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#E6E9F1;strokeColor=#71809C;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="335" y="780" width="305" height="158" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_evt" value="&lt;b&gt;shared.eventos&lt;/b&gt;&lt;br&gt;[eventos] sem chamada direta à Auditoria&lt;br&gt;ProntuarioAcessado /&lt;br&gt;AtendimentoRegistrado / AcessoNegado" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#FCE4F0;strokeColor=#B95186;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="760" y="785" width="400" height="178" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_listener" value="&lt;b&gt;AuditoriaListener&lt;/b&gt;&lt;br&gt;[seguranca.auditoria]&lt;br&gt;Leitura @Async · escrita/negado&lt;br&gt;síncronos" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#FCE4F0;strokeColor=#B95186;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="1250" y="785" width="360" height="178" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_audit" value="&lt;b&gt;AuditoriaService&lt;/b&gt;&lt;br&gt;[seguranca.auditoria]&lt;br&gt;INSERT em RegistroAuditoria" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#DCEEFF;strokeColor=#3777B7;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="1705" y="785" width="355" height="178" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_db" value="&lt;b&gt;PostgreSQL / H2&lt;/b&gt;&lt;br&gt;[Contêiner externo]&lt;br&gt;pro_* +&lt;br&gt;aud_registro_auditoria" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#DCD9F7;strokeColor=#7665BA;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="2090" y="545" width="215" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_agenda" value="&lt;b&gt;ConsultaPort → AgendaAdapter&lt;/b&gt;&lt;br&gt;[Porta / infra]&lt;br&gt;Valida consulta via AgendaApi" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#FFF0CD;strokeColor=#BC8630;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="710" y="1080" width="420" height="136" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_admin" value="&lt;b&gt;AuditoriaController&lt;/b&gt;&lt;br&gt;[api] · ADMIN&lt;br&gt;Consulta trilha de auditoria" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#DCEEFF;strokeColor=#3777B7;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="1550" y="1080" width="450" height="136" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_webpc" value="REST" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c4_web" target="c4_pc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_pcps" value="chama" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c4_pc" target="c4_ps">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_psdom" value="regras" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c4_ps" target="c4_dom">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_domrepo" value="porta" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c4_dom" target="c4_repo">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_repojpa" value="implementa" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=8 6;" edge="1" parent="1" source="c4_repo" target="c4_jpa">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_jpabd" value="JPA" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c4_jpa" target="c4_db">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2220" y="375" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c4_psexame" value="cria / consulta" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c4_ps" target="c4_exame">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="875" y="602" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c4_pspol" value="autoriza" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c4_ps" target="c4_policy">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_policyhandler" value="nega → 403" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=8 6;" edge="1" parent="1" source="c4_policy" target="c4_handler">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="640" y="614" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c4_handlerevt" value="AcessoNegado" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#B95186;fontColor=#B95186;fontSize=18;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=8 6;" edge="1" parent="1" source="c4_handler" target="c4_evt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_psevt" value="leitura / escrita" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#B95186;fontColor=#B95186;fontSize=18;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=8 6;" edge="1" parent="1" source="c4_ps" target="c4_evt">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="960" y="770" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c4_evlistener" value="evento" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#B95186;fontColor=#B95186;fontSize=18;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=8 6;" edge="1" parent="1" source="c4_evt" target="c4_listener">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_listeneraudit" value="persistência" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c4_listener" target="c4_audit">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_auditdb" value="INSERT" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c4_audit" target="c4_db">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2185" y="875" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c4_psagenda" value="ConsultaPort" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=8 6;" edge="1" parent="1" source="c4_ps" target="c4_agenda">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c4_adminaudit" value="SELECT trilha" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c4_admin" target="c4_audit">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="c5_page" name="5 - Componentes: Agenda">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="2320" pageHeight="1360" math="0" shadow="0" background="#F5F8FD">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="c5_title" value="C4 · NÍVEL 3 / AGENDA" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=37;fontStyle=1;fontColor=#163B6D;" vertex="1" parent="1">
+          <mxGeometry x="70" y="46" width="2140" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_subtitle" value="Disponibilidade + conflito no domínio · UNIQUE no banco fecha corrida · resposta 409 via tratamento HTTP" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=21;fontColor=#506176;" vertex="1" parent="1">
+          <mxGeometry x="70" y="115" width="2200" height="38" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_note0" value="API SaúdeCerta · Módulo Agenda + dependências de Cadastro" style="html=1;whiteSpace=wrap;rounded=1;arcSize=7;dashed=1;dashPattern=10 7;fillColor=#F8FBFF;strokeColor=#8DA6C1;strokeWidth=3;align=left;verticalAlign=top;spacingLeft=25;spacingTop=10;fontFamily=Arial;fontSize=22;fontStyle=1;fontColor=#163B6D;" vertex="1" parent="1">
+          <mxGeometry x="300" y="188" width="1700" height="1010" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_note1" value="ADR-005: horário_ocupado = NULL se não AGENDADA · uk_consulta_profissional_horario_ocupado · flush antes da resposta HTTP" style="html=1;whiteSpace=wrap;rounded=1;arcSize=10;fillColor=#E8EFF8;strokeColor=none;align=left;spacingLeft=15;fontFamily=Arial;fontSize=18;fontColor=#506176;" vertex="1" parent="1">
+          <mxGeometry x="70" y="1275" width="2160" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_web" value="&lt;b&gt;Aplicação Web&lt;/b&gt;&lt;br&gt;[Contêiner externo]&lt;br&gt;POST / PATCH / GET" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#123F6F;strokeColor=#0B2D50;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="35" y="300" width="232" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_controller" value="&lt;b&gt;AgendaController&lt;/b&gt;&lt;br&gt;[api] · REST / DTOs&lt;br&gt;Marcar, remarcar, cancelar,&lt;br&gt;consultar" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#DCEEFF;strokeColor=#3777B7;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="328" y="300" width="300" height="155" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_service" value="&lt;b&gt;AgendaService&lt;/b&gt;&lt;br&gt;[application] · @Transactional&lt;br&gt;Valida grade, conflito e&lt;br&gt;persiste" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#DCEEFF;strokeColor=#3777B7;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="706" y="300" width="300" height="155" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_consulta" value="&lt;b&gt;Consulta&lt;/b&gt;&lt;br&gt;[domain] · agregado&lt;br&gt;AGENDADA / REALIZADA /&lt;br&gt;CANCELADA" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#D1F4EA;strokeColor=#168673;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="300" width="300" height="155" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_repo" value="&lt;b&gt;ConsultaRepository&lt;/b&gt;&lt;br&gt;[domain] · porta&lt;br&gt;Verifica slot ocupado" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#FFF0CD;strokeColor=#BC8630;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="1455" y="300" width="300" height="155" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_jpa" value="&lt;b&gt;ConsultaJpaAdapter&lt;/b&gt;&lt;br&gt;[infra] · JPA&lt;br&gt;Mapeia UNIQUE para exceção" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#E6E9F1;strokeColor=#71809C;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="1830" y="300" width="300" height="155" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_db" value="&lt;b&gt;Banco de dados&lt;/b&gt;&lt;br&gt;[Contêiner externo]&lt;br&gt;UNIQUE&lt;br&gt;(profissional_id,&lt;br&gt;horario_ocupado)" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#DCD9F7;strokeColor=#7665BA;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="2095" y="685" width="205" height="175" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_vd" value="&lt;b&gt;ValidadorDeDisponibilidade&lt;/b&gt;&lt;br&gt;[domain service]&lt;br&gt;Confere intervalo e slot da grade" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#D1F4EA;strokeColor=#168673;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="706" y="615" width="325" height="155" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_vc" value="&lt;b&gt;ValidadorDeConflito&lt;/b&gt;&lt;br&gt;[domain service]&lt;br&gt;Consulta antes de gravar (RN02)" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#D1F4EA;strokeColor=#168673;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="1110" y="615" width="325" height="155" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_disp" value="&lt;b&gt;Disponibilidade&lt;/b&gt;&lt;br&gt;[domain]&lt;br&gt;gerarHorarios()" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#D1F4EA;strokeColor=#168673;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="1515" y="615" width="290" height="155" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_public" value="&lt;b&gt;AgendaApi&lt;/b&gt;&lt;br&gt;[application] · interface pública&lt;br&gt;Consumida por Prontuário" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#FFF0CD;strokeColor=#BC8630;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="333" y="980" width="315" height="145" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_cadport" value="&lt;b&gt;CadastroPort&lt;/b&gt;&lt;br&gt;[domain] · porta&lt;br&gt;Profissional ativo" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#FFF0CD;strokeColor=#BC8630;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="725" y="980" width="315" height="145" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_cadad" value="&lt;b&gt;CadastroAdapter&lt;/b&gt;&lt;br&gt;[infra]&lt;br&gt;Chama CadastroApi" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#E6E9F1;strokeColor=#71809C;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="980" width="315" height="145" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_cadapi" value="&lt;b&gt;CadastroApi&lt;/b&gt;&lt;br&gt;[outro módulo]&lt;br&gt;Cadastro" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#DCEEFF;strokeColor=#3777B7;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="1515" y="980" width="290" height="145" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_errors" value="&lt;b&gt;TratadorDeErros&lt;/b&gt;&lt;br&gt;[@ControllerAdvice]&lt;br&gt;ConflitoDeHorarioException → 409" style="html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=12;rounded=1;arcSize=12;fillColor=#E6E9F1;strokeColor=#71809C;strokeWidth=3;fontFamily=Arial;fontSize=17;fontColor=#12243B;" vertex="1" parent="1">
+          <mxGeometry x="1915" y="1010" width="340" height="145" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_webcontroller" value="REST" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c5_web" target="c5_controller">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_controllerservice" value="caso de uso" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c5_controller" target="c5_service">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_serviceconsulta" value="estado" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c5_service" target="c5_consulta">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_consultarepo" value="porta" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c5_consulta" target="c5_repo">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_repojpa" value="implementa" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=8 6;" edge="1" parent="1" source="c5_repo" target="c5_jpa">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_jpadb" value="UNIQUE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c5_jpa" target="c5_db">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2200" y="455" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c5_servicevd" value="validar slot" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c5_service" target="c5_vd">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_servicevc" value="validar conflito" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c5_service" target="c5_vc">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="955" y="685" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c5_vddisp" value="gera grade" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c5_vd" target="c5_disp">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_vcrepo" value="consulta" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c5_vc" target="c5_repo">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1275" y="535" />
+              <mxPoint x="1570" y="535" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c5_publicservice" value="AgendaApi" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c5_public" target="c5_service">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="495" y="555" />
+              <mxPoint x="765" y="555" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c5_servicecadport" value="profissional" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c5_service" target="c5_cadport">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_cadportad" value="implementa" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=8 6;" edge="1" parent="1" source="c5_cadport" target="c5_cadad">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_cadadapi" value="CadastroApi" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c5_cadad" target="c5_cadapi">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c5_jpaerrors" value="ConflitoDeHorarioException" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=3;strokeColor=#5C7089;fontColor=#5C7089;fontSize=18;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=8 6;" edge="1" parent="1" source="c5_jpa" target="c5_errors">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
