@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: saudecerta
+  datasource:
+    # H2 em memória, modo PostgreSQL. A produção usa PostgreSQL (ADR-006).
+    url: jdbc:h2:mem:saudecerta;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  jpa:
+    open-in-view: false
+    hibernate:
+      # O esquema vem das migrações Flyway; o Hibernate só confere se as entidades batem.
+      ddl-auto: validate
+  flyway:
+    locations: classpath:db/migration
+  jackson:
+    time-zone: America/Belem
+
+server:
+  error:
+    include-message: never
+    include-stacktrace: never
