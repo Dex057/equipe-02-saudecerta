@@ -1,13 +1,13 @@
 # ADR-002 — Auditoria de acesso ao prontuário híbrida: assíncrona na leitura, síncrona na escrita
 
-**Status:** Aceita (20/10/2026). Convenções das tabelas de custo/benefício: [README](README.md).
+**Status:** Aceita (20/10/2026), revisada em 17/11/2026. Convenções das tabelas de custo/benefício: [README](README.md).
 
 **Contexto.** RF12/RNF02 exigem registrar todo acesso ao prontuário; RNF03 exige leitura rápida. Há três situações diferentes: (1) **leitura**, a mais frequente; (2) **escrita** (atendimento, prescrição, exame), rara e já transacional; (3) **acesso negado**, rara e a mais importante para segurança. A meta de RNF02 é "disponível em até 1 minuto", o que já admite uma pequena defasagem. Um fato que a análise precisa admitir: com ~20 profissionais e um único banco, um `INSERT` síncrono por leitura custa poucos milissegundos, então o ganho de desempenho isolado é modesto. O argumento forte é outro: no Projeto Final o Prontuário pode virar um serviço separado, e aí a auditoria síncrona vira uma chamada remota no caminho crítico da leitura.
 
 **Decisão.**
 
 - **Leitura:** o `ProntuarioService` publica o evento `ProntuarioAcessado`; o `AuditoriaListener` (`@Async`, fila limitada com política *caller-runs*, para nunca descartar evento por estouro de fila) grava o `RegistroAuditoria`. Falha na gravação: 3 tentativas e, se persistir, registro em log estruturado `AUDITORIA_FALHA` com alerta. No desligamento, a fila é drenada (*graceful shutdown*).
-- **Escrita:** o `ProntuarioService` publica o evento `AtendimentoRegistrado` (atendimento, prescrição, exame ou complemento). O `AuditoriaListener` o consome com `@EventListener` **sem** `@Async`, ou seja, na mesma thread e na **mesma transação** de quem publicou. Se a gravação do `RegistroAuditoria` falhar, a exceção desfaz também a alteração clínica: não existe alteração sem rastro.
+- **Escrita:** o `ProntuarioService` publica o evento `AtendimentoRegistrado` (atendimento, prescrição, exame ou complemento). A mudança de status de uma solicitação de exame (RF09) publica `StatusExameAlterado`, com o mesmo tratamento (ADR-003). O `AuditoriaListener` o consome com `@EventListener` **sem** `@Async`, ou seja, na mesma thread e na **mesma transação** de quem publicou. Se a gravação do `RegistroAuditoria` falhar, a exceção desfaz também a alteração clínica: não existe alteração sem rastro.
 - **Acesso negado:** a Segurança publica `AcessoNegado` ao capturar a negativa, e o mesmo listener a grava de forma síncrona, antes de a resposta `403` sair. Como não há alteração a desfazer, se a gravação falhar o acesso continua negado e a falha vai para o log `AUDITORIA_FALHA` com alerta.
 - **Regra de dependência:** nenhum módulo de negócio chama o `AuditoriaService` nem conhece o módulo Auditoria. Os três caminhos passam por eventos em `shared.eventos`, e só o `AuditoriaListener` os consome.
 - **Política de falha:** a leitura segue (*fail-open*) mesmo se a auditoria falhar. Bloquear um profissional que precisa do histórico durante um atendimento é pior do que registrar com atraso; o risco é aceito e monitorado.

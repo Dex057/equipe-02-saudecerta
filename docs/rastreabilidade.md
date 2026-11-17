@@ -15,7 +15,7 @@ Liga cada requisito à decisão que o sustenta, ao componente ou à tática que 
 | **RF09** Solicitar exames | ADR-003, ADR-006 | `SolicitacaoDeExame`, agregado independente ligado ao `Atendimento` por `atendimentoId`; só o `status` pode mudar (`pro_solicitacao_exame`) | Exame sem atendimento é impossível (RN04); status inicial SOLICITADO; transições SOLICITADO → REALIZADO ou CANCELADO não alteram o atendimento |
 | **RF10** Consultar histórico | ADR-002 | `ProntuarioService.consultarHistorico` paginado; porta `ProntuarioRepository` | Ordem cronológica; p95 inferior a 2 segundos na primeira página |
 | **RF11** Autenticar e aplicar perfis | ADR-004 | `SegurancaConfig`, `AuthController`, filtro JWT, `@PreAuthorize` | Teste da matriz perfil × recurso (`arquitetura.md`, seção 3.3) |
-| **RF12** Auditar acesso ao prontuário | ADR-002 | `AuditoriaListener`, `AuditoriaService`, `RegistroAuditoria`, `AuditoriaController` | Acessar prontuário e verificar o registro, considerando a espera assíncrona |
+| **RF12** Auditar acesso ao prontuário | ADR-002, ADR-003 | `AuditoriaListener`, `AuditoriaService`, `RegistroAuditoria`, `AuditoriaController`; eventos de escrita `AtendimentoRegistrado` e `StatusExameAlterado` | Acessar prontuário e verificar o registro, considerando a espera assíncrona; mudar o status de um exame gera um registro de auditoria na mesma transação |
 | **RF13** Gerar relatórios | ADR-006 | `RelatoriosService` com consultas de leitura dedicadas | Totais corretos sobre massa de dados conhecida |
 | **RF14** Consultar os próprios agendamentos e dados | ADR-004 | `AgendaApi`, `CadastroApi` e `TitularidadePolicy` para restringir a consulta ao paciente autenticado | Paciente consulta os próprios dados e agendamentos; tentativa de consultar outro paciente é negada |
 | **RF15** Gerenciar usuários e perfis | ADR-004 | `Usuario`, `SegurancaConfig` e controle de perfis RBAC | ADMIN cria, edita e desativa usuários; usuário desativado não consegue autenticar |
@@ -42,7 +42,7 @@ Confere que nenhuma decisão arquitetural declarada nas ADRs fique sem requisito
 |---|---|
 | ADR-001 Monólito modular | RNF04, RNF05 |
 | ADR-002 Auditoria híbrida | RF12, RF10, RF07, RNF01, RNF02, RNF03 |
-| ADR-003 Hexagonal | RF02, RF07, RF08, RF09, RN01–RN07, RNF05 |
+| ADR-003 Hexagonal | RF02, RF07, RF08, RF09, RF12, RN01–RN07, RNF05 |
 | ADR-004 RBAC + titularidade + JWT | RF11, RF14, RF15, RN06, RNF01, RNF06, RNF07 |
 | ADR-005 Anti-conflito de horário | RF03, RF04, RF05, RF06, RN02, RN07, RNF06 |
 | ADR-006 Banco com propriedade por módulo | RF01, RF09, RF13, RN01, RN05, RNF03, RNF05 |
