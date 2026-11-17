@@ -40,6 +40,8 @@ docs/
   visao.md            visão, stakeholders, atores, escopo e estilo arquitetural (E1)
   requisitos.md       RF, RNF, RN, casos de uso e drivers (E1)
   arquitetura.md      C4, camadas, modelo de domínio e cenários de qualidade (E2)
+  arquitetura.drawio  diagramas C4 editáveis (E2)
+  img/                imagens exportadas do draw.io (E2)
   adr/                uma decisão arquitetural por arquivo (E2)
   rastreabilidade.md  matriz requisito → decisão → componente → teste (E2)
 ref/                  material do professor
