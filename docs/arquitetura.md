@@ -98,7 +98,7 @@ O contêiner **API SaúdeCerta** é dividido em módulos de negócio (pacotes de
 
 #### 2.3.1 Visão geral dos módulos
 
-As setas cheias são dependências de código permitidas (um módulo só usa a interface pública `*Api` do outro); as tracejadas são eventos. Segurança é transversal (autenticação e autorização por perfil valem para todos os módulos), então as setas de autorização não foram desenhadas para não poluir o diagrama. Os eventos (`ProntuarioAcessado`, `AtendimentoRegistrado`, `AcessoNegado`) ficam em `shared.eventos`, de modo que **nenhum módulo de negócio depende de Auditoria**: Prontuário e Segurança só publicam eventos, e o `AuditoriaListener` os consome.
+As setas cheias são dependências de código permitidas (um módulo só usa a interface pública `*Api` do outro); as tracejadas são eventos. Segurança é transversal (autenticação e autorização por perfil valem para todos os módulos), então as setas de autorização não foram desenhadas para não poluir o diagrama. Os eventos (`ProntuarioAcessado`, `AtendimentoRegistrado`, `StatusExameAlterado`, `AcessoNegado`) ficam em `shared.eventos`, de modo que **nenhum módulo de negócio depende de Auditoria**: Prontuário e Segurança só publicam eventos, e o `AuditoriaListener` os consome.
 
 ```mermaid
 flowchart LR
@@ -130,7 +130,7 @@ flowchart LR
     rel -->|"AgendaApi (leitura)"| age
 
     pro -.->|"evento ProntuarioAcessado<br/>(assíncrono)"| shr
-    pro -.->|"evento AtendimentoRegistrado<br/>(síncrono)"| shr
+    pro -.->|"eventos AtendimentoRegistrado / StatusExameAlterado<br/>(síncronos)"| shr
     seg -.->|"evento AcessoNegado<br/>(síncrono)"| shr
     shr -.->|"entrega ao listener"| aud
 
@@ -159,7 +159,7 @@ flowchart LR
 
 #### 2.3.2 Zoom: módulo Prontuário e fluxo de auditoria
 
-É o ponto mais sensível do sistema e onde a tensão entre RNF02 e RNF03 se resolve. Três caminhos de auditoria convivem (ADR-002), e os três chegam à Auditoria por evento, sem que Prontuário ou Segurança chamem o `AuditoriaService`: **leitura** (`ProntuarioAcessado`, listener assíncrono), **escrita** (`AtendimentoRegistrado`, listener síncrono que roda na mesma transação do atendimento; se a gravação falhar, a alteração clínica também falha) e **acesso negado** (`AcessoNegado`, listener síncrono; se a gravação falhar, o acesso continua negado e a falha vai para o log `AUDITORIA_FALHA`).
+É o ponto mais sensível do sistema e onde a tensão entre RNF02 e RNF03 se resolve. Três caminhos de auditoria convivem (ADR-002), e os três chegam à Auditoria por evento, sem que Prontuário ou Segurança chamem o `AuditoriaService`: **leitura** (`ProntuarioAcessado`, listener assíncrono), **escrita** (`AtendimentoRegistrado` e `StatusExameAlterado`, listeners síncronos na mesma transação da alteração clínica; se a gravação da auditoria falhar, a alteração clínica também falha) e **acesso negado** (`AcessoNegado`, listener síncrono; se a gravação falhar, o acesso continua negado e a falha vai para o log `AUDITORIA_FALHA`).
 
 ```mermaid
 flowchart TB
@@ -175,7 +175,7 @@ flowchart TB
         cp["<b>ConsultaPort</b><br/>[porta no domain]"]
         pja["<b>ProntuarioJpaAdapter</b><br/>[infra: Spring Data JPA]"]
         aa["<b>AgendaAdapter</b><br/>[infra]"]
-        ev["<b>ProntuarioAcessado / AtendimentoRegistrado / AcessoNegado</b><br/>[shared.eventos]<br/>Eventos de domínio"]
+        ev["<b>ProntuarioAcessado / AtendimentoRegistrado / StatusExameAlterado / AcessoNegado</b><br/>[shared.eventos]<br/>Eventos de domínio"]
         al["<b>AuditoriaListener</b><br/>[seguranca.auditoria: @EventListener]<br/>Leitura: @Async, fila limitada, 3 tentativas,<br/>fallback em log estruturado<br/>Escrita e negado: síncrono"]
         asv["<b>AuditoriaService</b><br/>[seguranca.auditoria]<br/>Grava RegistroAuditoria"]
         ac["<b>AuditoriaController</b><br/>[seguranca.auditoria: api]<br/>Consulta da trilha (ADMIN)"]
@@ -197,7 +197,7 @@ flowchart TB
     aa -->|"chama"| agenda
 
     ps -->|"1. leitura: publica ProntuarioAcessado"| ev
-    ps -->|"2. escrita: publica AtendimentoRegistrado"| ev
+    ps -->|"2. escrita: AtendimentoRegistrado / StatusExameAlterado"| ev
     
     ev -.->|"1. assíncrono"| al
     ev -.->|"2 e 3. síncrono<br/>(2 na mesma transação)"| al
@@ -322,7 +322,7 @@ br.edu.ifpa.saudecerta
 ├── relatorios    (api, application, infra)           consultas de leitura
 ├── seguranca     (api, application, domain, infra)   Usuario, perfis, JWT, TitularidadePolicy
 │   └── auditoria (api, application, domain, infra)   RegistroAuditoria, AuditoriaListener
-└── shared        (eventos, excecoes, config)         ProntuarioAcessado, AtendimentoRegistrado, AcessoNegado, @ControllerAdvice
+└── shared        (eventos, excecoes, config)         ProntuarioAcessado, AtendimentoRegistrado, StatusExameAlterado, AcessoNegado, @ControllerAdvice
 ```
 
 ### 3.3 Controle de acesso por perfil (RBAC)
@@ -455,126 +455,9 @@ As rotas e permissões acima cobrem: RF01 (criar, buscar, ler e manter pacientes
 
 O modelo parte do guia (seção 10) e foi refinado em três pontos: (1) os módulos se referenciam **só por identificador**, nunca por associação JPA entre módulos (ADR-006); (2) foi acrescentada a entidade `Complemento` para modelar o "somente-anexação" de RN05; (3) foi acrescentado `RegistroAuditoria` para RF12.
 
-```mermaid
-classDiagram
-    direction LR
+![Modelo de domínio do SaúdeCerta](img/modelo-dominio.png)
 
-    namespace Modulo_Cadastro {
-        class Paciente {
-            +Long id
-            +String nome
-            +Cpf cpf
-            +LocalDate dataNascimento
-            +String telefone
-            +String email
-            +boolean ativo
-        }
-        class Profissional {
-            +Long id
-            +String nome
-            +String registroConselho
-            +boolean ativo
-        }
-        class Especialidade {
-            +Long id
-            +String nome
-        }
-    }
-
-    namespace Modulo_Agenda {
-        class Disponibilidade {
-            +Long id
-            +Long profissionalId
-            +DayOfWeek diaSemana
-            +LocalTime horaInicio
-            +LocalTime horaFim
-            +int duracaoMinutos
-            +gerarHorarios(LocalDate) List~LocalDateTime~
-        }
-        class Consulta {
-            +Long id
-            +Long pacienteId
-            +Long profissionalId
-            +LocalDateTime dataHora
-            +StatusConsulta status
-            +remarcar(LocalDateTime)
-            +cancelar()
-            +marcarRealizada(LocalDate hoje)
-        }
-    }
-
-    namespace Modulo_Prontuario {
-        class Prontuario {
-            +Long id
-            +Long pacienteId
-        }
-        class Atendimento {
-            +Long id
-            +Long consultaId
-            +Long profissionalId
-            +LocalDateTime dataHora
-            +String queixa
-            +String evolucao
-            +String conduta
-            +complementar(String texto, Long autorId)
-        }
-        class Complemento {
-            +Long id
-            +String texto
-            +Long autorId
-            +LocalDateTime dataHora
-        }
-        class Prescricao {
-            +Long id
-            +LocalDate dataEmissao
-        }
-        class ItemDePrescricao {
-            +Long id
-            +String medicamento
-            +String dose
-            +String posologia
-        }
-        class SolicitacaoDeExame {
-            +Long id
-            +String tipoExame
-            +StatusExame status
-        }
-    }
-
-    namespace Modulo_Seguranca {
-        class Usuario {
-            +Long id
-            +String login
-            +String senhaHash
-            +Perfil perfil
-            +Long vinculoId
-            +boolean ativo
-        }
-        class RegistroAuditoria {
-            +Long id
-            +Long usuarioId
-            +Long pacienteId
-            +AcaoAuditoria acao
-            +LocalDateTime dataHora
-        }
-    }
-
-    Profissional "N" -- "N" Especialidade
-    Profissional "1" ..> "N" Disponibilidade : profissionalId
-    Consulta "N" ..> "1" Paciente : pacienteId
-    Consulta "N" ..> "1" Profissional : profissionalId
-    Prontuario "1" ..> "1" Paciente : pacienteId
-    Prontuario "1" *-- "N" Atendimento
-    Atendimento "0..1" ..> "1" Consulta : consultaId
-    Atendimento "1" *-- "N" Complemento
-    Atendimento "1" *-- "N" Prescricao
-    Prescricao "1" *-- "1..N" ItemDePrescricao
-    Atendimento "1" *-- "N" SolicitacaoDeExame
-    Usuario "1" ..> "0..1" Profissional : vinculoId
-    Usuario "1" ..> "0..1" Paciente : vinculoId
-    RegistroAuditoria "N" ..> "1" Usuario : usuarioId
-    RegistroAuditoria "N" ..> "0..1" Paciente : pacienteId
-```
+*Fonte editável: [modelo-dominio.drawio](modelo-dominio.drawio).*
 
 Legenda: linha cheia com losango = composição dentro do mesmo agregado; linha tracejada = referência por identificador entre agregados/módulos. Enumerações: `StatusConsulta {AGENDADA, REALIZADA, CANCELADA}`, `StatusExame {SOLICITADO, REALIZADO, CANCELADO}`, `Perfil {RECEPCAO, PROFISSIONAL, PACIENTE, ADMIN}`, `AcaoAuditoria {LEITURA, CRIACAO, COMPLEMENTO, ACESSO_NEGADO}`. `Cpf` é um objeto de valor que valida o dígito verificador.
 
@@ -585,11 +468,12 @@ Legenda: linha cheia com losango = composição dentro do mesmo agregado; linha 
 | `Paciente` | — | RN01 (CPF único entre cadastros ativos) |
 | `Profissional` | lista de `Especialidade` (referências) | RF02 (pelo menos uma especialidade) |
 | `Consulta` | — | RN02 (um horário por profissional), RN07 (só cancela se AGENDADA) |
-| `Atendimento` | `Complemento`, `Prescricao`, `ItemDePrescricao`, `SolicitacaoDeExame` | RN04 (nada existe sem atendimento), RN05 (imutável após criado) |
+| `Atendimento` | `Complemento`, `Prescricao`, `ItemDePrescricao` | RN04 (prescrições vinculadas), RN05 (registro clínico imutável) |
+| `SolicitacaoDeExame` | — | RF09: agregado independente com `atendimentoId`; transições SOLICITADO para REALIZADO ou CANCELADO |
 | `Usuario` | — | RNF07 (só guarda o hash) |
 | `RegistroAuditoria` | — | imutável; só INSERT |
 
-`Prontuario` é a identidade do histórico de um paciente (1:1 com `Paciente`). Para não carregar toda a história em memória, o repositório devolve os atendimentos **paginados** (`historico(pacienteId, page)`); por isso `Atendimento` é raiz do próprio agregado.
+`Prontuario` é a identidade do histórico de um paciente (1:1 com `Paciente`). O campo `prontuarioId` vincula cada `Atendimento` ao histórico, sem composição entre as duas raízes. Para não carregar toda a história em memória, o repositório devolve os atendimentos **paginados** (`historico(pacienteId, page)`). `Atendimento` é raiz do próprio agregado. `SolicitacaoDeExame` também é um agregado independente: possui `atendimentoId`, nasce vinculada a um atendimento existente e pode atualizar somente seu status, sem modificar o registro clínico original.
 
 ### 4.2 Onde cada regra de negócio é aplicada
 
@@ -598,10 +482,11 @@ Legenda: linha cheia com losango = composição dentro do mesmo agregado; linha 
 | RN01 | `Cpf` + `CadastroService` consulta o repositório; coluna derivada `cpf_ativo` com `UNIQUE` (ADR-006) | cadastrar o mesmo CPF duas vezes → erro |
 | RN02 | `ValidadorDeDisponibilidade` + `ValidadorDeConflito` (domínio) e restrição `UNIQUE (profissional_id, horario_ocupado)` (ADR-005) | **testes obrigatórios do E3:** slot fora da disponibilidade/grade não grava; dois POSTs concorrentes no mesmo slot resultam em uma criação e um `409`; PATCH de remarcação concorrente não perde o slot anterior |
 | RN03 | `Consulta.marcarRealizada(hoje)` recebe a data do `Clock` injetado | consulta futura → erro 422; `Clock` fixo no teste |
-| RN04 | `Prescricao` e `SolicitacaoDeExame` só são criadas por métodos do `Atendimento`; FK `NOT NULL` | impossível construir sem atendimento |
-| RN05 | `Atendimento` sem setters; `ProntuarioRepository` não tem `update` nem `delete`; só `adicionarComplemento` | **teste obrigatório do E3**: não existe operação de alterar/apagar; tabela sem `DELETE` para o usuário da aplicação |
+| RN04 | `Prescricao` nasce vinculada a `Atendimento`; `SolicitacaoDeExame` é criada por caso de uso que valida `atendimentoId` existente, com FK interna `NOT NULL` | rejeitar prescrição ou solicitação sem atendimento |
+| RN05 | `Atendimento` sem setters; `pro_atendimento` aceita apenas INSERT/SELECT; complementos são novos registros, sem alterar o original. O status de `SolicitacaoDeExame` muda em tabela separada (ADR-006) | **teste obrigatório do E3:** atendimento não pode ser alterado/apagado; atualização de status do exame não muda o atendimento |
 | RN06 | `@PreAuthorize` nega RECEPCAO/ADMIN no prontuário; `TitularidadePolicy` compara o paciente do token com o do recurso | teste de matriz perfil × recurso (seção 5, RNF01) |
 | RN07 | `Consulta.cancelar()` lança exceção se status ≠ AGENDADA | cancelar consulta REALIZADA → 422 |
+| RF09 (status do exame) | `SolicitacaoDeExame` altera somente `status`: SOLICITADO → REALIZADO ou CANCELADO; estados finais não retornam a SOLICITADO. O caso de uso publica `StatusExameAlterado` em `shared.eventos`, com usuário, status anterior, novo status e horário; o `AuditoriaListener` registra o evento de forma síncrona, na mesma transação (ADR-002, RF12). | **Teste obrigatório no E3:** transição válida atualiza o status e gera exatamente um registro de auditoria; transição inválida retorna 422; falha na auditoria reverte a atualização do status. |
 
 ---
 

@@ -6,6 +6,16 @@
 
 **Decisão.** O domínio é composto de classes Java puras, com comportamento (`Consulta.cancelar()`, `Atendimento.complementar()`), sem anotações de Spring Data/JPA. O domínio declara **portas** (`ConsultaRepository`, `ProntuarioRepository`, `CadastroPort`, `ConsultaPort`); a camada `infra` as implementa com adaptadores JPA, com entidades JPA próprias e **mapeamento manual** entre elas.
 
+**Aplicação ao modelo do Prontuário.** `Atendimento` é raiz de agregado própria, ligada a `Prontuario` por `prontuarioId`, sem composição entre raízes. `Complemento` acrescenta informações por INSERT sem alterar o atendimento original. `SolicitacaoDeExame` é outro agregado, ligado por `atendimentoId`, cuja atualização é restrita ao status (SOLICITADO para REALIZADO ou CANCELADO). O domínio continua puro; o adaptador JPA e os mapeadores tratam a persistência, conforme ADR-006.
+
+**Auditoria das transições de status dos exames (RF09 e RF12).** Os métodos `marcarRealizado()` e `cancelar()` de `SolicitacaoDeExame` validam a transição de estado no domínio. O caso de uso, executado com `@Transactional`, persiste a mudança por meio do adaptador JPA e, após confirmar a atualização de exatamente uma linha, publica o evento `StatusExameAlterado` em `shared.eventos`, ainda dentro da mesma transação.
+
+O evento contém `solicitacaoExameId`, `atendimentoId`, `usuarioId`, `statusAnterior`, `statusNovo` e `dataHora`. O `AuditoriaListener` consome esse evento de maneira síncrona, com `@EventListener` e sem `@Async`, registrando a ação e os dados da transição em `RegistroAuditoria`, conforme o ADR-002.
+
+Se a persistência da auditoria falhar, a transação inteira será revertida, incluindo a atualização do status do exame. Assim, nenhuma alteração clínica poderá ser confirmada sem seu respectivo registro de auditoria.
+
+**Teste obrigatório no E3:** verificar que uma transição válida atualiza o status e gera exatamente um registro de auditoria contendo usuário, status anterior, status novo e horário. Simular também falha na gravação da auditoria e confirmar que o status do exame permanece inalterado.
+
 **Alternativas consideradas.**
 
 - **A. Domínio puro + portas + adaptadores JPA** (escolhida).
@@ -27,4 +37,4 @@
 (−) Fere o "mínimo de código"; só se paga porque RNF05 e o PF exigem a fronteira.
 **Quando reavaliar:** se algum módulo for só CRUD sem regra (hoje, `Especialidade`), aceitar entidade JPA direta como exceção documentada.
 
-**Rastreia:** RF02, RF07, RF08, RF09, RN01–RN07, RNF05.
+**Rastreia:** RF02, RF07, RF08, RF09, RF12, RN01–RN07, RNF05.
