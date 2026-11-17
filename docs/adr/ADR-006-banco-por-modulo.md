@@ -75,6 +75,22 @@ Os privilégios abaixo são concedidos ao usuário do banco utilizado pela aplic
 
 **Privilégios no PostgreSQL:** a aplicação utiliza permissões restritas por tabela. Em `pro_solicitacao_exame`, a atualização fica limitada à coluna `status`, permitindo acompanhar a solicitação sem modificar o registro clínico original.
 
+**Atualização de status pelo adaptador JPA (RF09).** O Hibernate, ao atualizar uma entidade gerenciada, pode gerar um `UPDATE` incluindo outras colunas além de `status`. Isso seria incompatível com os privilégios restritos de `pro_solicitacao_exame` no PostgreSQL.
+
+Para evitar esse problema, o adaptador de persistência utilizará uma operação explícita do Spring Data JPA com `@Modifying` e `@Query(nativeQuery = true)`, executando exclusivamente:
+
+`UPDATE pro_solicitacao_exame SET status = :novoStatus WHERE id = :id AND status = :statusAnterior`
+
+O caso de uso será `@Transactional`, validará previamente a transição no domínio e exigirá que exatamente uma linha seja atualizada. Nenhuma alteração de status será realizada por `save()` ou atualização automática de uma entidade JPA gerenciada. O usuário de banco da aplicação terá `UPDATE` concedido exclusivamente à coluna `status`.
+
+**Teste de integração obrigatório no E3 (PostgreSQL).** Utilizando PostgreSQL em contêiner e conexão autenticada com o usuário real da aplicação, verificar:
+
+- A transição válida de `SOLICITADO` para `REALIZADO` ou `CANCELADO` atualiza somente a coluna `status`.
+- Uma tentativa de alterar qualquer outra coluna é recusada pelo PostgreSQL por falta de permissão.
+- Os demais campos da solicitação permanecem inalterados.
+- Uma transição inválida ou concorrente não modifica o registro.
+- A operação respeita a transação e a auditoria síncrona definida no ADR-002.
+
 **Limitação do H2:** o ambiente de desenvolvimento/teste não reproduz o mesmo controle de privilégios por tabela e coluna adotado em produção. Nele, a imutabilidade será garantida pelas regras da aplicação e pelos testes. As restrições de privilégios da produção devem ser verificadas contra PostgreSQL.
 
 **Verificação:** um teste de integração utilizando PostgreSQL em contêiner deverá conectar com o usuário da aplicação, tentar executar `UPDATE` em `pro_atendimento` e confirmar que a operação é rejeitada por falta de permissão.
