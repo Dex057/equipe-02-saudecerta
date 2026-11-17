@@ -69,7 +69,7 @@ Os privilégios abaixo são concedidos ao usuário do banco utilizado pela aplic
 | `pro_complemento` | prontuario | SELECT, INSERT | Acrescenta informações sem alterar o atendimento original |
 | `pro_prescricao` | prontuario | SELECT, INSERT | Sem UPDATE ou DELETE |
 | `pro_item_prescricao` | prontuario | SELECT, INSERT | Sem UPDATE ou DELETE |
-| `pro_solicitacao_exame` | prontuario | SELECT, INSERT, UPDATE somente em `status` | Agregado independente; RF09 e DC-1 |
+| `pro_solicitacao_exame` | prontuario | SELECT, INSERT, UPDATE somente em `status` | Agregado independente; RF09 |
 | `seg_usuario` | seguranca | SELECT, INSERT, UPDATE | Nunca DELETE; desativação por `ativo` |
 | `aud_registro_auditoria` | seguranca.auditoria | SELECT, INSERT | Trilha imutável; sem UPDATE ou DELETE |
 
