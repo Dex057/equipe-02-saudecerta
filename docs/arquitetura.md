@@ -595,7 +595,7 @@ Legenda: linha cheia com losango = composição dentro do mesmo agregado; linha 
 
 | Regra | Onde é imposta | Como é testada |
 |---|---|---|
-| RN01 | `Cpf` + `CadastroService` consulta o repositório; índice único no banco para CPF ativo | cadastrar o mesmo CPF duas vezes → erro |
+| RN01 | `Cpf` + `CadastroService` consulta o repositório; coluna derivada `cpf_ativo` com `UNIQUE` (ADR-006) | cadastrar o mesmo CPF duas vezes → erro |
 | RN02 | `ValidadorDeDisponibilidade` + `ValidadorDeConflito` (domínio) e restrição `UNIQUE (profissional_id, horario_ocupado)` (ADR-005) | **testes obrigatórios do E3:** slot fora da disponibilidade/grade não grava; dois POSTs concorrentes no mesmo slot resultam em uma criação e um `409`; PATCH de remarcação concorrente não perde o slot anterior |
 | RN03 | `Consulta.marcarRealizada(hoje)` recebe a data do `Clock` injetado | consulta futura → erro 422; `Clock` fixo no teste |
 | RN04 | `Prescricao` e `SolicitacaoDeExame` só são criadas por métodos do `Atendimento`; FK `NOT NULL` | impossível construir sem atendimento |
