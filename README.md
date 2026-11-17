@@ -59,3 +59,23 @@ As tarefas ficam no [quadro do E2](https://github.com/users/Dex057/projects/2/vi
 5. Só entra na branch principal depois de revisado. No fim da entrega: `git tag E2 && git push --tags`.
 
 Nunca suba senha, chave ou `target/`. Dúvidas sobre a tarefa ficam na própria issue.
+
+## E3: como executar
+
+Requisitos: **JDK 17** (o projeto traz o Maven Wrapper, não precisa instalar o Maven).
+
+```
+./mvnw test              # roda todos os testes (no Windows: mvnw.cmd test)
+./mvnw spring-boot:run   # sobe a API em http://localhost:8080
+```
+
+O banco de desenvolvimento é o H2 em memória, em modo PostgreSQL. O esquema vem das migrações em `src/main/resources/db/migration` (Flyway); o Hibernate só confere se as entidades batem (`ddl-auto: validate`).
+
+### Como trabalhamos no E3
+
+- **Cada pessoa é dona de um módulo** e só edita o próprio pacote em `src/main/java/br/edu/ifpa/saudecerta/`: Edson (`cadastro`, `seguranca.auditoria`), Vergílio (`agenda`), Marcus (`prontuario`). Mexer em `shared/`, `pom.xml` ou `application.yml` é um PR pequeno e à parte.
+- **Um módulo só fala com outro pela interface pública** (`CadastroApi`, `AgendaApi` e os `*Resumo`, na raiz do pacote do módulo). O `ArquiteturaTest` quebra o build se alguém acessar `api`, `application`, `domain` ou `infra` de outro módulo, ou se o `domain` importar JPA ou Spring.
+- **Migrações por faixa de versão**, para as branches não colidirem: cadastro V10–V19, agenda V20–V29, prontuário V30–V39, segurança V40–V49, auditoria V50–V59. Tabelas com o prefixo do módulo (`cad_`, `age_`, `pro_`, `seg_`, `aud_`), como no ADR-006.
+- **Erros** seguem o envelope `{codigo, mensagem, timestamp}` e os status do `arquitetura.md` (400, 404, 409, 422). Lance `RecursoNaoEncontradoException`, `ConflitoException` ou `RegraDeNegocioException`; o `GlobalExceptionHandler` converte.
+- **"Hoje" vem do `Clock` injetado**, nunca de `LocalDate.now()`, para o teste poder fixar a data (RN03).
+- Branch `e3-<tarefa>`, PR com `Closes #N`, revisão por quem a tabela da equipe indica, em até 12 horas. Todo PR roda `./mvnw test` antes de ser aberto.
