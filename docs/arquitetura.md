@@ -55,7 +55,7 @@ O contêiner **API SaúdeCerta** é um monólito modular (ADR-001), com camadas 
 
 #### 2.3.1 Visão geral dos módulos
 
-As setas de dependência de código entre módulos passam pelas interfaces `*Api`; os eventos são publicados em `shared.eventos`. As checagens de autorização valem para todos os casos de uso e não foram repetidas nas conexões para manter o diagrama legível. Relatórios não acessa outros módulos por interfaces para gerar agregados: lê apenas as tabelas `age_consulta`, `cad_profissional`, `cad_especialidade` e `cad_profissional_especialidade`, por SQL dedicado (ADR-006).
+A visão geral explicita as conexões REST/HTTPS da Aplicação Web com Cadastro, Agenda, Prontuário, Relatórios, Segurança (login/JWT) e Auditoria (consulta administrativa). Os módulos persistem por adaptadores JPA e operações SQL próprias, como indicado no diagrama. A exceção é Relatórios: consultas SQL dedicadas e somente leitura em `age_consulta`, `cad_profissional`, `cad_especialidade` e `cad_profissional_especialidade` (ADR-006). As interfaces `*Api` entre módulos e o fluxo `shared.eventos` são resumidos na legenda inferior e detalhados nas páginas seguintes; as checagens de autorização são transversais (ADR-004).
 
 ![C4 nível 3 — Visão geral de componentes do SaúdeCerta](img/c4-3-componentes-visao-geral.png)
 
