@@ -1,6 +1,8 @@
 
 package br.edu.ifpa.saudecerta.prontuario.infra;
 
+import java.util.Optional;
+
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,5 +40,17 @@ public class ProntuarioRepositoryAdapter
                     .getId();
             });
     }
-}
 
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Long> buscarPacienteIdPorId(
+            Long prontuarioId) {
+
+        if (prontuarioId == null || prontuarioId <= 0) {
+            return Optional.empty();
+        }
+
+        return jpaRepository.findById(prontuarioId)
+            .map(ProntuarioEntity::getPacienteId);
+    }
+}
