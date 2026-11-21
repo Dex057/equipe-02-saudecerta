@@ -1,6 +1,7 @@
 
 package br.edu.ifpa.saudecerta.prontuario.infra;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -44,10 +45,7 @@ public class AtendimentoRepositoryAdapter
             atendimento.getDataHora()
         );
 
-        AtendimentoEntity salvo =
-            jpaRepository.inserir(entity);
-
-        return paraDominio(salvo);
+        return paraDominio(jpaRepository.inserir(entity));
     }
 
     @Override
@@ -58,7 +56,33 @@ public class AtendimentoRepositoryAdapter
             .map(this::paraDominio);
     }
 
-    private Atendimento paraDominio(AtendimentoEntity entity) {
+    @Override
+    @Transactional(readOnly = true)
+    public List<Atendimento> buscarPaginaPorProntuario(
+            Long prontuarioId,
+            int pagina,
+            int tamanho) {
+
+        return jpaRepository
+            .buscarPaginaPorProntuario(
+                prontuarioId, pagina, tamanho
+            )
+            .stream()
+            .map(this::paraDominio)
+            .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long contarPorProntuario(Long prontuarioId) {
+
+        return jpaRepository.contarPorProntuario(
+            prontuarioId
+        );
+    }
+
+    private Atendimento paraDominio(
+            AtendimentoEntity entity) {
 
         return new Atendimento(
             entity.getId(),
