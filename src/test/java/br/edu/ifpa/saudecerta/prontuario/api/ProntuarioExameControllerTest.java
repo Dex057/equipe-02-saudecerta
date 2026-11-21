@@ -11,6 +11,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -109,4 +112,35 @@ class ProntuarioExameControllerTest {
 
         verifyNoInteractions(service);
     }
+
+
+@Test
+void naoPermitePutNemDeleteNoStatusDoExame()
+        throws Exception {
+
+    var service = mock(AlterarStatusExameService.class);
+    var autorizacao = mock(AutorizacaoProntuario.class);
+
+    MockMvc mvc = MockMvcBuilders
+        .standaloneSetup(
+            new ProntuarioExameController(
+                service, autorizacao
+            )
+        )
+        .setControllerAdvice(new GlobalExceptionHandler())
+        .build();
+
+    mvc.perform(
+        put("/api/exames/55/status")
+    )
+    .andExpect(status().isMethodNotAllowed());
+
+    mvc.perform(
+        delete("/api/exames/55/status")
+    )
+    .andExpect(status().isMethodNotAllowed());
+
+    verifyNoInteractions(service, autorizacao);
+}
+
 }
