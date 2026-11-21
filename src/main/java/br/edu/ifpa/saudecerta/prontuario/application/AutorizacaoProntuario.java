@@ -16,4 +16,9 @@ public interface AutorizacaoProntuario {
         Long profissionalId,
         Long usuarioId
     ) {}
+
+Long exigirUsuarioAutorizadoParaConsultarHistorico(
+    Long pacienteId
+);
+
 }

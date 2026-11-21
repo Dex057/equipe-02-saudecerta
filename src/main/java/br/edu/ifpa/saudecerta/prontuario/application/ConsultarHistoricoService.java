@@ -107,4 +107,56 @@ public class ConsultarHistoricoService {
             List.copyOf(atendimentos)
         );
     }
+
+public record AtendimentoResumo(
+        Long id,
+        Long consultaId,
+        String queixa,
+        String evolucao,
+        String conduta,
+        Instant dataHora) {
+}
+
+public record HistoricoResumo(
+        Long pacienteId,
+        int pagina,
+        int tamanho,
+        long total,
+        List<AtendimentoResumo> atendimentos) {
+}
+
+@Transactional(readOnly = true)
+public HistoricoResumo consultarResumo(
+        Long pacienteId,
+        Long usuarioId,
+        int pagina) {
+
+    PaginaHistorico historico = consultar(
+        pacienteId,
+        usuarioId,
+        pagina
+    );
+
+    List<AtendimentoResumo> atendimentos =
+        historico.atendimentos()
+            .stream()
+            .map(a -> new AtendimentoResumo(
+                a.getId(),
+                a.getConsultaId(),
+                a.getQueixa(),
+                a.getEvolucao(),
+                a.getConduta(),
+                a.getDataHora()
+            ))
+            .toList();
+
+    return new HistoricoResumo(
+        historico.pacienteId(),
+        historico.pagina(),
+        historico.tamanho(),
+        historico.total(),
+        atendimentos
+    );
+}
+
 }
