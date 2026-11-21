@@ -3,6 +3,8 @@ package br.edu.ifpa.saudecerta.prontuario.api;
 
 import br.edu.ifpa.saudecerta.prontuario.application.AlterarStatusExameService;
 import br.edu.ifpa.saudecerta.prontuario.application.AutorizacaoProntuario;
+import br.edu.ifpa.saudecerta.shared.excecoes.GlobalExceptionHandler;
+import br.edu.ifpa.saudecerta.shared.excecoes.RegraDeNegocioException;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -29,8 +31,7 @@ class ProntuarioExameControllerTest {
         MockMvc mvc = MockMvcBuilders
             .standaloneSetup(
                 new ProntuarioExameController(
-                    service,
-                    autorizacao
+                    service, autorizacao
                 )
             )
             .build();
@@ -47,5 +48,65 @@ class ProntuarioExameControllerTest {
 
         verify(service)
             .alterarPorTexto(55L, 9L, "REALIZADO");
+    }
+
+    @Test
+    void deveRetornar422QuandoTransicaoForInvalida()
+            throws Exception {
+
+        var service = mock(AlterarStatusExameService.class);
+        var autorizacao = mock(AutorizacaoProntuario.class);
+
+        when(autorizacao
+            .exigirUsuarioAutorizadoParaAlterarExame(55L))
+            .thenReturn(9L);
+
+        doThrow(new RegraDeNegocioException(
+            "Transicao de status invalida."
+        )).when(service).alterarPorTexto(
+            55L, 9L, "SOLICITADO"
+        );
+
+        MockMvc mvc = MockMvcBuilders
+            .standaloneSetup(
+                new ProntuarioExameController(
+                    service, autorizacao
+                )
+            )
+            .setControllerAdvice(new GlobalExceptionHandler())
+            .build();
+
+        mvc.perform(
+            patch("/api/exames/55/status")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\":\"SOLICITADO\"}")
+        )
+        .andExpect(status().isUnprocessableEntity());
+    }
+
+    @Test
+    void deveRetornar400QuandoStatusEstiverVazio()
+            throws Exception {
+
+        var service = mock(AlterarStatusExameService.class);
+        var autorizacao = mock(AutorizacaoProntuario.class);
+
+        MockMvc mvc = MockMvcBuilders
+            .standaloneSetup(
+                new ProntuarioExameController(
+                    service, autorizacao
+                )
+            )
+            .setControllerAdvice(new GlobalExceptionHandler())
+            .build();
+
+        mvc.perform(
+            patch("/api/exames/55/status")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\":\"\"}")
+        )
+        .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(service);
     }
 }
