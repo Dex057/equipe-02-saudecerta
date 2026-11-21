@@ -93,4 +93,17 @@ public class AlterarStatusExameService {
 
         return exame;
     }
+
+@Transactional
+public void alterarPorTexto(
+        Long exameId,
+        Long usuarioId,
+        String status) {
+
+    StatusExame novoStatus =
+        StatusExameParser.converter(status);
+
+    alterar(exameId, usuarioId, novoStatus);
+}
+
 }
