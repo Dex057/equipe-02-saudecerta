@@ -53,4 +53,19 @@ public class ProntuarioRepositoryAdapter
         return jpaRepository.findById(prontuarioId)
             .map(ProntuarioEntity::getPacienteId);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Long> buscarIdPorPaciente(
+            Long pacienteId) {
+
+        if (pacienteId == null || pacienteId <= 0) {
+            throw new IllegalArgumentException(
+                "Paciente invalido."
+            );
+        }
+
+        return jpaRepository.findByPacienteId(pacienteId)
+            .map(ProntuarioEntity::getId);
+    }
 }

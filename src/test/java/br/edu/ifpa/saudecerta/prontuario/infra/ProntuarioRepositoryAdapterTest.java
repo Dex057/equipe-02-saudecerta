@@ -61,4 +61,38 @@ class ProntuarioRepositoryAdapterTest {
                 .buscarOuCriarPorPaciente(-1L)
         );
     }
+    
+@Test
+void naoCriaProntuarioAoConsultarPacienteSemRegistro() {
+
+    long quantidadeAntes = jpaRepository.count();
+
+    var encontrado = prontuarioRepository
+        .buscarIdPorPaciente(703L);
+
+    assertTrue(encontrado.isEmpty());
+
+    assertEquals(
+        quantidadeAntes,
+        jpaRepository.count()
+    );
+}
+
+@Test
+void deveEncontrarProntuarioExistentePorPaciente() {
+
+    Long prontuarioId = prontuarioRepository
+        .buscarOuCriarPorPaciente(702L);
+
+    var encontrado = prontuarioRepository
+        .buscarIdPorPaciente(702L);
+
+    assertTrue(encontrado.isPresent());
+
+    assertEquals(
+        prontuarioId,
+        encontrado.orElseThrow()
+    );
+}
+
 }
