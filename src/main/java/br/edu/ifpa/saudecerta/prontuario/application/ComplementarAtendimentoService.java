@@ -99,4 +99,20 @@ public class ComplementarAtendimentoService {
 
         return salvo;
     }
+
+@Transactional
+public Long complementarRetornandoId(
+        Long atendimentoId,
+        Long profissionalId,
+        Long usuarioId,
+        String texto) {
+
+    return complementar(
+        atendimentoId,
+        profissionalId,
+        usuarioId,
+        texto
+    ).getId();
+}
+
 }
