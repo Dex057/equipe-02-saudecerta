@@ -11,6 +11,8 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 
 /** Traduz exceções para o envelope de erro e o status HTTP do contrato (400, 404, 409, 422, 500). */
 @RestControllerAdvice
@@ -48,6 +50,26 @@ public class GlobalExceptionHandler {
         return resposta(HttpStatus.BAD_REQUEST, "REQUISICAO_INVALIDA",
                 "Requisição malformada ou com parâmetro inválido.");
     }
+
+@ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+ResponseEntity<RespostaErro> metodoNaoPermitido(
+        HttpRequestMethodNotSupportedException e) {
+
+    HttpHeaders headers = new HttpHeaders();
+
+    if (e.getSupportedHttpMethods() != null) {
+        headers.setAllow(e.getSupportedHttpMethods());
+    }
+
+    return ResponseEntity
+        .status(HttpStatus.METHOD_NOT_ALLOWED)
+        .headers(headers)
+        .body(RespostaErro.de(
+            "METODO_NAO_PERMITIDO",
+            "Metodo HTTP nao permitido para este recurso."
+        ));
+}
+
 
     @ExceptionHandler(Exception.class)
     ResponseEntity<RespostaErro> inesperado(Exception e) {
