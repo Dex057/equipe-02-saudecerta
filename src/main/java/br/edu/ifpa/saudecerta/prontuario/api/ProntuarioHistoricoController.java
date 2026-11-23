@@ -2,7 +2,7 @@
 package br.edu.ifpa.saudecerta.prontuario.api;
 
 import br.edu.ifpa.saudecerta.prontuario.application.AutorizacaoProntuario;
-import br.edu.ifpa.saudecerta.prontuario.application.ConsultarHistoricoService;
+import br.edu.ifpa.saudecerta.prontuario.application.ConsultarHistoricoCompletoService;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
@@ -17,11 +17,11 @@ import org.springframework.web.bind.annotation.*;
 )
 public class ProntuarioHistoricoController {
 
-    private final ConsultarHistoricoService service;
+    private final ConsultarHistoricoCompletoService service;
     private final AutorizacaoProntuario autorizacao;
 
     public ProntuarioHistoricoController(
-            ConsultarHistoricoService service,
+            ConsultarHistoricoCompletoService service,
             AutorizacaoProntuario autorizacao) {
 
         this.service = service;
@@ -30,7 +30,7 @@ public class ProntuarioHistoricoController {
 
     @GetMapping("/{id}/prontuario")
     public ResponseEntity<
-            ConsultarHistoricoService.HistoricoResumo> consultar(
+            ConsultarHistoricoCompletoService.HistoricoResumo> consultar(
             @PathVariable Long id,
             @RequestParam(defaultValue = "0") int page) {
 

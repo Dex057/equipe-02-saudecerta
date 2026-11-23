@@ -3,6 +3,8 @@ package br.edu.ifpa.saudecerta.prontuario.application;
 
 public interface AutorizacaoProntuario {
 
+    Long exigirUsuarioAutorizadoParaRegistrarAtendimento(Long consultaId);
+
     Long exigirUsuarioAutorizadoParaAlterarExame(
         Long exameId
     );

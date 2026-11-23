@@ -4,7 +4,7 @@ package br.edu.ifpa.saudecerta.prontuario.api;
 import java.util.List;
 
 import br.edu.ifpa.saudecerta.prontuario.application.AutorizacaoProntuario;
-import br.edu.ifpa.saudecerta.prontuario.application.ConsultarHistoricoService;
+import br.edu.ifpa.saudecerta.prontuario.application.ConsultarHistoricoCompletoService;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -19,7 +19,7 @@ class ProntuarioHistoricoControllerTest {
     void deveConsultarHistoricoComAutorizacao()
             throws Exception {
 
-        var service = mock(ConsultarHistoricoService.class);
+        var service = mock(ConsultarHistoricoCompletoService.class);
         var autorizacao = mock(AutorizacaoProntuario.class);
 
         when(autorizacao
@@ -28,7 +28,7 @@ class ProntuarioHistoricoControllerTest {
 
         when(service.consultarResumo(300L, 9L, 0))
             .thenReturn(
-                new ConsultarHistoricoService.HistoricoResumo(
+                new ConsultarHistoricoCompletoService.HistoricoResumo(
                     300L,
                     0,
                     10,
