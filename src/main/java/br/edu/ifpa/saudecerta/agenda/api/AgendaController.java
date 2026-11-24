@@ -2,6 +2,7 @@ package br.edu.ifpa.saudecerta.agenda.api;
 
 import br.edu.ifpa.saudecerta.agenda.ConsultaResumo;
 import br.edu.ifpa.saudecerta.agenda.application.AgendaService;
+import br.edu.ifpa.saudecerta.shared.excecoes.RecursoNaoEncontradoException;
 import br.edu.ifpa.saudecerta.shared.excecoes.RegraDeNegocioException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
@@ -58,5 +59,11 @@ public class AgendaController {
     public List<ConsultaResumo> buscar(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data,
                                        @RequestParam @Positive Long profissionalId) {
         return agenda.buscar(data, profissionalId);
+    }
+
+    @GetMapping("/consultas/{id}")
+    public ConsultaResumo buscarConsulta(@PathVariable @Positive Long id) {
+        return agenda.buscarConsulta(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Consulta não encontrada."));
     }
 }

@@ -4,8 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import br.edu.ifpa.saudecerta.agenda.domain.Consulta;
@@ -160,6 +162,17 @@ class AgendaApiRestTest {
         assertFalse(agenda.buscarConsulta(consultaId).isEmpty());
         agenda.marcarRealizada(consultaId);
         criar(HOJE.atTime(10, 0));
+    }
+
+    @Test
+    void consultaPodeSerBuscadaPorIdEAusenteRetorna404() throws Exception {
+        Long consultaId = criar(HOJE.atTime(10, 30));
+
+        mockMvc.perform(get("/api/consultas/" + consultaId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(consultaId));
+        mockMvc.perform(get("/api/consultas/999999"))
+                .andExpect(status().isNotFound());
     }
 
     private Long criar(LocalDateTime dataHora) {

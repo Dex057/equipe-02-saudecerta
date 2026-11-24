@@ -11,7 +11,7 @@ import org.springframework.data.jpa.repository.Lock;
 class ConsultaJpaRepositoryLockTest {
 
     @Test
-    void onlyUpdateLookupUsesPessimisticWriteLock() throws NoSuchMethodException {
+    void buscaParaAtualizacaoUsaLockPessimistaDeEscrita() throws NoSuchMethodException {
         Lock lock = ConsultaJpaRepository.class
                 .getMethod("buscarParaAtualizacao", Long.class)
                 .getAnnotation(Lock.class);
