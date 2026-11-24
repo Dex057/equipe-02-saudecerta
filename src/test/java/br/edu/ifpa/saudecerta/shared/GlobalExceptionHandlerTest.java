@@ -9,8 +9,10 @@ import br.edu.ifpa.saudecerta.shared.excecoes.ConflitoException;
 import br.edu.ifpa.saudecerta.shared.excecoes.GlobalExceptionHandler;
 import br.edu.ifpa.saudecerta.shared.excecoes.RecursoNaoEncontradoException;
 import br.edu.ifpa.saudecerta.shared.excecoes.RegraDeNegocioException;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -49,6 +51,11 @@ class GlobalExceptionHandlerTest {
         @GetMapping("/t/erro")
         void erro() {
             throw new IllegalStateException("detalhe interno que não pode vazar");
+        }
+
+        @GetMapping("/t/restricao")
+        void restricao() {
+            throw new ConstraintViolationException(Set.of());
         }
 
         @GetMapping("/t/parametro")
@@ -107,6 +114,28 @@ class GlobalExceptionHandlerTest {
         mvc.perform(get("/t/parametro").param("quantidade", "abc"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("REQUISICAO_INVALIDA"));
+    }
+
+    @Test
+    void violacaoDeRestricaoDeParametroVira400() throws Exception {
+        mvc.perform(get("/t/restricao"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("VALIDACAO"));
+    }
+
+    @Test
+    void metodoNaoPermitidoVira405() throws Exception {
+        mvc.perform(post("/t/conflito"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Allow", "GET"))
+                .andExpect(jsonPath("$.codigo").value("METODO_NAO_PERMITIDO"));
+    }
+
+    @Test
+    void tipoDeConteudoNaoSuportadoVira415() throws Exception {
+        mvc.perform(post("/t/validacao").contentType(MediaType.TEXT_PLAIN).content("x"))
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(jsonPath("$.codigo").value("TIPO_NAO_SUPORTADO"));
     }
 
     @Test
