@@ -4,17 +4,11 @@ package br.edu.ifpa.saudecerta.prontuario.api;
 import br.edu.ifpa.saudecerta.prontuario.application.AutorizacaoProntuario;
 import br.edu.ifpa.saudecerta.prontuario.application.ConsultarHistoricoCompletoService;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/pacientes")
-@ConditionalOnProperty(
-    prefix = "saudecerta.prontuario",
-    name = "api-habilitada",
-    havingValue = "true"
-)
 public class ProntuarioHistoricoController {
 
     private final ConsultarHistoricoCompletoService service;

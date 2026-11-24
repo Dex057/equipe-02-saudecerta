@@ -44,7 +44,7 @@ class AtendimentoPaginacaoJpaTest {
     }
 
     @Test
-    void devePaginarDoMaisRecenteParaOMaisAntigo() {
+    void devePaginarDoMaisAntigoParaOMaisRecente() {
 
         Long prontuarioId = prontuarioRepository
             .saveAndFlush(new ProntuarioEntity(800L))
@@ -71,9 +71,9 @@ class AtendimentoPaginacaoJpaTest {
         assertEquals(5, pagina1.size());
         assertEquals(2, pagina2.size());
 
-        assertEquals(1311L, pagina0.get(0).getConsultaId());
-        assertEquals(1306L, pagina1.get(0).getConsultaId());
-        assertEquals(1300L, pagina2.get(1).getConsultaId());
+        assertEquals(1300L, pagina0.get(0).getConsultaId());
+        assertEquals(1305L, pagina1.get(0).getConsultaId());
+        assertEquals(1311L, pagina2.get(1).getConsultaId());
 
         assertEquals(
             12L,

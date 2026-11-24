@@ -53,7 +53,7 @@ public class AtendimentoJpaRepository {
         return entityManager.createQuery(
             "SELECT a FROM AtendimentoEntity a " +
             "WHERE a.prontuarioId = :prontuarioId " +
-            "ORDER BY a.dataHora DESC, a.id DESC",
+            "ORDER BY a.dataHora ASC, a.id ASC",
             AtendimentoEntity.class
         )
         .setParameter("prontuarioId", prontuarioId)

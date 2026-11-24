@@ -71,12 +71,12 @@ class AtendimentoPaginacaoAdapterTest {
         assertEquals(1, segundaPagina.size());
 
         assertEquals(
-            "Segunda queixa",
+            "Primeira queixa",
             primeiraPagina.get(0).getQueixa()
         );
 
         assertEquals(
-            "Primeira queixa",
+            "Segunda queixa",
             segundaPagina.get(0).getQueixa()
         );
 

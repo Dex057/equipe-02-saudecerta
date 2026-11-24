@@ -6,15 +6,12 @@ import br.edu.ifpa.saudecerta.prontuario.application.AutorizacaoProntuario;
 import br.edu.ifpa.saudecerta.prontuario.application.RegistrarAtendimentoFacade;
 import jakarta.validation.Valid;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/consultas")
-@ConditionalOnProperty(prefix = "saudecerta.prontuario",
-        name = "api-habilitada", havingValue = "true")
 public class ProntuarioAtendimentoController {
 
     private final RegistrarAtendimentoFacade service;

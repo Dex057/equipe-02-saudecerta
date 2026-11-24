@@ -50,7 +50,7 @@ public class RegistrarAtendimentoService {
             );
         }
 
-        if (usuarioId == null || usuarioId <= 0) {
+        if (usuarioId != null && usuarioId <= 0) {
             throw new IllegalArgumentException(
                 "Usuario invalido."
             );

@@ -6,17 +6,11 @@ import br.edu.ifpa.saudecerta.prontuario.application.AutorizacaoProntuario;
 
 import jakarta.validation.Valid;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/exames")
-@ConditionalOnProperty(
-    prefix = "saudecerta.prontuario",
-    name = "api-habilitada",
-    havingValue = "true"
-)
 public class ProntuarioExameController {
 
     private final AlterarStatusExameService service;
