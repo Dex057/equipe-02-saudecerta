@@ -1,6 +1,5 @@
 package br.edu.ifpa.saudecerta.agenda.application;
 
-import br.edu.ifpa.saudecerta.agenda.AgendaApi;
 import br.edu.ifpa.saudecerta.agenda.ConsultaResumo;
 import br.edu.ifpa.saudecerta.agenda.domain.Consulta;
 import br.edu.ifpa.saudecerta.agenda.domain.ConsultaRepository;
@@ -22,7 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class AgendaService implements AgendaApi {
+public class AgendaService {
 
     private final ConsultaRepository consultas;
     private final ObjectProvider<CadastroApi> cadastroProvider;
@@ -78,13 +77,11 @@ public class AgendaService implements AgendaApi {
                 .toList();
     }
 
-    @Override
     @Transactional(readOnly = true)
     public Optional<ConsultaResumo> buscarConsulta(Long id) {
         return consultas.buscar(id).map(AgendaService::resumo);
     }
 
-    @Override
     @Transactional
     public void marcarRealizada(Long consultaId) {
         Consulta consulta = consultas.buscarParaAtualizacao(consultaId)
