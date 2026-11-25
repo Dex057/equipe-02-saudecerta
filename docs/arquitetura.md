@@ -211,6 +211,7 @@ As rotas completam os fluxos dos casos de uso e cobrem RF01–RF15. Todas, salvo
 | PUT | `/api/profissionais/{id}/disponibilidades` | ADMIN; PROFISSIONAL (próprio) | RF03 |
 | GET | `/api/profissionais/{id}/agenda?data=` | RECEPCAO, ADMIN; PROFISSIONAL (próprio) | RF03, UC01 |
 | GET | `/api/consultas?data=&profissionalId=` | RECEPCAO, ADMIN; PROFISSIONAL (próprio) | UC02 |
+| GET | `/api/consultas/{id}` | RECEPCAO, ADMIN; PROFISSIONAL (próprio) | RF04 |
 | GET | `/api/pacientes/{id}/consultas` | PACIENTE (próprio), ADMIN | RF14 |
 | POST | `/api/consultas` | RECEPCAO | RF04, RF06 |
 | PATCH | `/api/consultas/{id}` | RECEPCAO | RF05 |
